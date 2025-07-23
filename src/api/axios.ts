@@ -1,10 +1,9 @@
 import axios from 'axios';
-import { interceptorLoading } from './interceptorLoading.ts';
-// Tạo một instance của axios với cấu hình mặc định
+import { interceptorLoading } from '../utils/interceptorLoading';
+
 const api = axios.create({
-  // baseURL: 'https://jsonplaceholder.typicode.com, // URL của API khi có server thật
-  baseURL: '/',  // baseURL / thôi 
-  timeout: 10000, // Timeout sau 10s
+  baseURL: '/',
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -14,11 +13,6 @@ const api = axios.create({
 // Thêm interceptor để xử lý request
 api.interceptors.request.use(
   (config) => {
-    // Có thể thêm token vào header ở đây khi có authentication
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
     interceptorLoading(true);
     return config;
   },
@@ -30,22 +24,17 @@ api.interceptors.request.use(
 // Thêm interceptor để xử lý response
 api.interceptors.response.use(
   (response) => {
-    // Trường hợp response thành công
     interceptorLoading(false);
     return response.data;
   },
   (error) => {
-    // Xử lý các lỗi HTTP tại đây
     interceptorLoading(false);
     if (error.response) {
-      // Server trả về response với mã lỗi
       console.error('API Error:', error.response.data);
 
-      // Xử lý theo mã lỗi
       switch (error.response.status) {
         case 401:
           // Unauthorized - có thể đăng xuất người dùng
-          // logout();
           break;
         case 403:
           // Forbidden
@@ -60,14 +49,11 @@ api.interceptors.response.use(
           break;
       }
     } else if (error.request) {
-      // Request gửi đi nhưng không nhận được response
       console.error('No response received:', error.request);
     } else {
-      // Lỗi khi setting up request
       console.error('Request error:', error.message);
     }
 
-    // Trả về rejection để có thể catch ở nơi gọi API
     return Promise.reject(error);
   }
 );

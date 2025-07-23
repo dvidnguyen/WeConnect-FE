@@ -95,7 +95,7 @@ const SignUp = () => {
               </div>
             </div>
             <div className="mt-6 flex flex-col gap-2">
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full loading">
                 Sign Up
               </Button>
               <Button type="button" variant="outline" className="w-full">

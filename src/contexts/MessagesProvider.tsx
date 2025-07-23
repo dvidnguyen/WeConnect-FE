@@ -3,13 +3,7 @@ import type { ReactNode } from "react";
 import { MessagesContext } from "./MessageContext";
 import type { Conversation, User } from "../lib/mockData";
 import { mockUsers } from "../lib/mockData";
-import {
-  fetchConversations,
-  fetchConversationById,
-  sendMessage as sendMessageApi,
-  markAsRead,
-  // fetchCurrentUser
-} from "../utils/services";
+import { messageService } from "../services";
 
 interface MessagesProviderProps {
   children: ReactNode;
@@ -27,7 +21,7 @@ export function MessagesProvider({ children }: MessagesProviderProps) {
     const getInitialData = async () => {
       setIsLoading(true);
       try {
-        const convos = await fetchConversations();
+        const convos = await messageService.getConversations();
         setConversations(convos);
         setError(null);
       } catch (err) {
@@ -45,11 +39,11 @@ export function MessagesProvider({ children }: MessagesProviderProps) {
   const selectConversation = useCallback(async (id: number) => {
     setIsLoading(true);
     try {
-      const conversation = await fetchConversationById(id);
+      const conversation = await messageService.getConversationById(id);
       if (conversation) {
         setCurrentConversation(conversation);
         // Đánh dấu tất cả tin nhắn là đã đọc
-        await markAsRead(id);
+        await messageService.markConversationAsRead(id);
         // Cập nhật lại trạng thái cuộc trò chuyện trong danh sách
         setConversations(prevConversations =>
           prevConversations.map(c =>
@@ -73,7 +67,7 @@ export function MessagesProvider({ children }: MessagesProviderProps) {
 
     try {
       // Gọi API để gửi tin nhắn
-      const newMessage = await sendMessageApi(currentConversation.id, content);
+      const newMessage = await messageService.sendMessage(currentConversation.id, content);
 
       // Cập nhật conversation hiện tại
       setCurrentConversation(prev => {
