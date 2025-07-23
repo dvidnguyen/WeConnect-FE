@@ -40,7 +40,7 @@ const SignUp = () => {
     // TODO: Gửi dữ liệu đăng ký lên bằng api 
     alert(`Đăng ký thành công với email: ${values.email}`)
   }
-
+  
   return (
     <>
       <Card className="w-full max-w-sm m-auto">
