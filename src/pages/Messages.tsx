@@ -101,7 +101,7 @@ const ContactList = () => {
             placeholder="Tìm kiếm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-1 pr-8 text-sm border rounded-full focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-1 pr-8 text-sm border rounded-full focus:outline-none focus:ring-1 focus:ring-blue-400"
           />
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"
             className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">

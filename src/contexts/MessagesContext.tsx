@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import type { Conversation, User } from '@/lib/mockData';
+import { mockUsers } from '@/lib/mockData';
 import {
   fetchConversations,
   fetchConversationById,
   sendMessage as sendMessageApi,
-  markAsRead,
-  mockUsers
-} from '@/lib/mockData';
+  markAsRead
+} from '@/utils/services';
 
 // Định nghĩa kiểu dữ liệu cho Context
 interface MessagesContextType {
@@ -136,13 +136,4 @@ export const MessagesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       {children}
     </MessagesContext.Provider>
   );
-};
-
-// Hook để sử dụng context
-export const useMessages = () => {
-  const context = useContext(MessagesContext);
-  if (context === undefined) {
-    throw new Error('useMessages must be used within a MessagesProvider');
-  }
-  return context;
 };

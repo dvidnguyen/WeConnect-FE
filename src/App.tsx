@@ -7,7 +7,7 @@ import Messages from './pages/Messages'
 import MessageContent from './pages/MessageContent'
 import MessageEmpty from './pages/MessageEmpty'
 import { MessagesProvider } from './contexts/MessagesProvider'
-
+import { Toaster } from "@/components/ui/sonner"
 function App() {
   return (
     <>
@@ -30,6 +30,7 @@ function App() {
 
         <Route path='*' element={<div>Error</div>} />
       </Routes>
+      <Toaster />
     </>
   )
 }

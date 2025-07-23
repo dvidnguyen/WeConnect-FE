@@ -2,13 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { MessagesContext } from "./MessageContext";
 import type { Conversation, User } from "../lib/mockData";
+import { mockUsers } from "../lib/mockData";
 import {
   fetchConversations,
   fetchConversationById,
-  mockUsers,
   sendMessage as sendMessageApi,
-  markAsRead
-} from "../lib/mockData";
+  markAsRead,
+  // fetchCurrentUser
+} from "../utils/services";
 
 interface MessagesProviderProps {
   children: ReactNode;

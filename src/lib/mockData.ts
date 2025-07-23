@@ -5,6 +5,8 @@ export type User = {
   avatar: string;
   status: "online" | "offline" | "away";
   lastActive?: string;
+  timeJoined?: string;
+  nameTag?: string; // Thêm trường nameTag
 };
 
 export type Message = {
@@ -97,27 +99,27 @@ export const mockConversations: Conversation[] = [
       {
         id: 1,
         senderId: 1,
-        content: "Chào bạn, dạo này bạn thế nào?",
+        content: "Bạn còn giữ slide buổi thuyết trình hôm trước không?",
         timestamp: "2025-07-22T08:30:00",
         read: true
       },
       {
         id: 2,
         senderId: 0,
-        content: "Chào! Tôi khỏe, còn bạn?",
+        content: "Có chứ, để mình gửi cho nhé!",
         timestamp: "2025-07-22T08:32:00",
         read: true
       },
       {
         id: 3,
         senderId: 1,
-        content: "Tôi cũng vậy. Bạn có rảnh gặp mặt cuối tuần này không?",
+        content: "Tuyệt vời, cảm ơn bạn nhiều!",
         timestamp: "2025-07-22T08:34:00",
         read: true
       }
     ],
     lastMessage: {
-      content: "Tôi cũng vậy. Bạn có rảnh gặp mặt cuối tuần này không?",
+      content: "Tuyệt vời, cảm ơn bạn nhiều!",
       timestamp: "2025-07-22T08:34:00",
       senderId: 1,
       read: true
@@ -132,34 +134,34 @@ export const mockConversations: Conversation[] = [
       {
         id: 1,
         senderId: 2,
-        content: "Bạn có rảnh không?",
+        content: "Bạn thấy giao diện mình mới thiết kế ổn không?",
         timestamp: "2025-07-22T07:20:00",
         read: true
       },
       {
         id: 2,
         senderId: 0,
-        content: "Tôi đang bận một chút",
+        content: "Trông ổn đấy, có vài điểm mình góp ý thêm.",
         timestamp: "2025-07-22T07:25:00",
         read: true
       },
       {
         id: 3,
         senderId: 2,
-        content: "Ok, vậy khi nào rảnh thì nhắn mình nhé",
+        content: "Cứ thoải mái nhé, mình đang cần feedback.",
         timestamp: "2025-07-22T07:26:00",
         read: false
       },
       {
         id: 4,
         senderId: 2,
-        content: "À mà còn nhớ gửi tài liệu cho mình nhé",
+        content: "À, nhớ giúp mình review code phần auth nữa.",
         timestamp: "2025-07-22T07:27:00",
         read: false
       }
     ],
     lastMessage: {
-      content: "À mà còn nhớ gửi tài liệu cho mình nhé",
+      content: "À, nhớ giúp mình review code phần auth nữa.",
       timestamp: "2025-07-22T07:27:00",
       senderId: 2,
       read: false
@@ -174,13 +176,13 @@ export const mockConversations: Conversation[] = [
       {
         id: 1,
         senderId: 0,
-        content: "Hẹn gặp lại nhé!",
+        content: "Tối qua đi ăn quán bún bò đó ngon thiệt ha!",
         timestamp: "2025-07-21T18:30:00",
         read: true
       }
     ],
     lastMessage: {
-      content: "Hẹn gặp lại nhé!",
+      content: "Tối qua đi ăn quán bún bò đó ngon thiệt ha!",
       timestamp: "2025-07-21T18:30:00",
       senderId: 0,
       read: true
@@ -195,28 +197,28 @@ export const mockConversations: Conversation[] = [
       {
         id: 1,
         senderId: 4,
-        content: "Gửi em file nhé!",
+        content: "Làm poster sự kiện xong chưa gửi chị xem nào!",
         timestamp: "2025-07-21T14:10:00",
         read: true
       },
       {
         id: 2,
         senderId: 0,
-        content: "Đây em",
+        content: "Vừa xong đây chị ơi!",
         timestamp: "2025-07-21T14:15:00",
         read: true,
         attachments: [
           {
             type: "file",
             url: "#",
-            name: "document.pdf",
-            size: "2.5 MB"
+            name: "poster_final.pdf",
+            size: "3.2 MB"
           }
         ]
       }
     ],
     lastMessage: {
-      content: "Đây em",
+      content: "Vừa xong đây chị ơi!",
       timestamp: "2025-07-21T14:15:00",
       senderId: 0,
       read: true
@@ -231,20 +233,20 @@ export const mockConversations: Conversation[] = [
       {
         id: 1,
         senderId: 5,
-        content: "Đã nhận được chưa?",
+        content: "Code demo bạn gửi hôm qua chạy chưa?",
         timestamp: "2025-07-20T09:45:00",
         read: true
       },
       {
         id: 2,
         senderId: 0,
-        content: "Rồi, cảm ơn bạn nhiều!",
+        content: "Chạy ổn rồi nhé, không lỗi gì hết!",
         timestamp: "2025-07-20T09:50:00",
         read: true
       }
     ],
     lastMessage: {
-      content: "Rồi, cảm ơn bạn nhiều!",
+      content: "Chạy ổn rồi nhé, không lỗi gì hết!",
       timestamp: "2025-07-20T09:50:00",
       senderId: 0,
       read: true
@@ -259,27 +261,27 @@ export const mockConversations: Conversation[] = [
       {
         id: 1,
         senderId: 1,
-        content: "Chào mọi người!",
+        content: "Mọi người check lại deadline sprint tuần này nhé!",
         timestamp: "2025-07-19T10:00:00",
         read: true
       },
       {
         id: 2,
         senderId: 2,
-        content: "Chào các bạn!",
+        content: "Tớ xong phần UI rồi, còn backend sao rồi?",
         timestamp: "2025-07-19T10:02:00",
         read: true
       },
       {
         id: 3,
         senderId: 0,
-        content: "Chào cả nhóm, dự án mới thế nào rồi?",
+        content: "Tớ push phần login hôm qua rồi đó!",
         timestamp: "2025-07-19T10:05:00",
         read: true
       }
     ],
     lastMessage: {
-      content: "Chào cả nhóm, dự án mới thế nào rồi?",
+      content: "Tớ push phần login hôm qua rồi đó!",
       timestamp: "2025-07-19T10:05:00",
       senderId: 0,
       read: true
@@ -288,8 +290,9 @@ export const mockConversations: Conversation[] = [
     isGroup: true,
     groupName: "Dự án WeConnect",
     groupAvatar: "https://t4.ftcdn.net/jpg/02/07/94/95/360_F_207949567_GK0J6245kGnx4nmPxFRB1iVKIcsTxzWN.jpg"
-  },
+  }
 ];
+
 
 // Helper function to format date
 export const formatDate = (dateString: string) => {
@@ -318,71 +321,4 @@ export const formatDate = (dateString: string) => {
 
   // Other dates
   return date.toLocaleDateString('vi-VN');
-};
-
-// Mock API functions
-export const fetchConversations = (): Promise<Conversation[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockConversations);
-    }, 500); // Giả lập độ trễ mạng
-  });
-};
-
-export const fetchConversationById = (id: number): Promise<Conversation | undefined> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const conversation = mockConversations.find(c => c.id === id);
-      resolve(conversation);
-    }, 300); // Giả lập độ trễ mạng
-  });
-};
-
-export const sendMessage = (conversationId: number, content: string): Promise<Message> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const conversation = mockConversations.find(c => c.id === conversationId);
-
-      if (conversation) {
-        const newMessage: Message = {
-          id: Math.max(...conversation.messages.map(m => m.id)) + 1,
-          senderId: 0, // Current user
-          content,
-          timestamp: new Date().toISOString(),
-          read: true
-        };
-
-        conversation.messages.push(newMessage);
-        conversation.lastMessage = {
-          content,
-          timestamp: newMessage.timestamp,
-          senderId: 0,
-          read: true
-        };
-
-        resolve(newMessage);
-      } else {
-        throw new Error('Không tìm thấy cuộc trò chuyện');
-      }
-    }, 300);
-  });
-};
-
-export const markAsRead = (conversationId: number): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const conversation = mockConversations.find(c => c.id === conversationId);
-
-      if (conversation) {
-        conversation.messages.forEach(m => {
-          m.read = true;
-        });
-        conversation.unreadCount = 0;
-
-        resolve();
-      } else {
-        throw new Error('Không tìm thấy cuộc trò chuyện');
-      }
-    }, 200);
-  });
 };

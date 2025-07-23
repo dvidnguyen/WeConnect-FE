@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -37,10 +36,11 @@ const SignUp = () => {
   // Xử lý khi submit form
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values)
-    // TODO: Gửi dữ liệu đăng ký lên bằng api 
+    // TODO: Gửi dữ liệu đăng ký lên bằng api    
     alert(`Đăng ký thành công với email: ${values.email}`)
+    // Navigate("/login", { replace: true }) // Chuyển hướng đến trang đăng nhập sau khi đăng ký thành công
   }
-  
+
   return (
     <>
       <Card className="w-full max-w-sm m-auto">
