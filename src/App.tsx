@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import Login from './auth/Login'
 import SignUp from './auth/SignUp'
 import HomePage from './pages/HomePage'
+import Settings from './pages/Settings'
 import Messages from './pages/Messages'
 import MessageContent from './pages/MessageContent'
 import MessageEmpty from './pages/MessageEmpty'
@@ -15,7 +16,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
-
+        <Route path="/settings" element={<Settings />} />
         {/* Messages routes - nested routes với Outlet */}
         <Route path="/messages" element={
           <MessagesProvider>
