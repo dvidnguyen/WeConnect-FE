@@ -5,6 +5,18 @@ import { Card } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
+
+
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "../components/ui/alert-dialog";
 import { Toggle } from '../components/ui/toggle';
 
 // =====================
@@ -16,6 +28,9 @@ const Settings: React.FC = () => {
   // ---------------------
   const [username, setUsername] = React.useState(() => localStorage.getItem('username') || '');
   const [password, setPassword] = React.useState('');
+  const [pendingUsername, setPendingUsername] = React.useState<string | null>(null);
+  const [pendingPassword, setPendingPassword] = React.useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = React.useState(false);
   const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem('darkMode') === 'true');
   const [saveMessage, setSaveMessage] = React.useState('');
   const [dob, setDob] = React.useState(() => localStorage.getItem('dob') || '');
@@ -42,12 +57,15 @@ const Settings: React.FC = () => {
   };
 
   // Save settings to localStorage
-  const handleSave = () => {
-    localStorage.setItem('username', username);
+  // Save handler (with confirm dialog for username/password)
+  const handleSave = (opts?: { username?: string; password?: string }) => {
+    const newUsername = opts?.username ?? username;
+    const newPassword = opts?.password ?? password;
+    localStorage.setItem('username', newUsername);
     localStorage.setItem('darkMode', darkMode.toString());
     localStorage.setItem('activeStatus', activeStatus.toString());
-    if (password) {
-      localStorage.setItem('password', password); // Never store plain passwords in real apps!
+    if (newPassword) {
+      localStorage.setItem('password', newPassword); // Never store plain passwords in real apps!
     }
     if (dob) {
       localStorage.setItem('dob', dob);
@@ -55,6 +73,38 @@ const Settings: React.FC = () => {
     setSaveMessage('Settings saved!');
     setTimeout(() => setSaveMessage(''), 2000);
     setPassword('');
+  };
+
+  // Intercept account form submit for username/password changes
+  const handleAccountSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const storedUsername = localStorage.getItem('username') || '';
+    const storedPassword = localStorage.getItem('password') || '';
+    const usernameChanged = username !== storedUsername;
+    const passwordChanged = password && password !== storedPassword;
+    if (usernameChanged || passwordChanged) {
+      setPendingUsername(usernameChanged ? username : null);
+      setPendingPassword(passwordChanged ? password : null);
+      setShowConfirm(true);
+    } else {
+      handleSave();
+    }
+  };
+
+  const handleConfirm = () => {
+    handleSave({
+      username: pendingUsername !== null ? pendingUsername : username,
+      password: pendingPassword !== null ? pendingPassword : password,
+    });
+    setShowConfirm(false);
+    setPendingUsername(null);
+    setPendingPassword(null);
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setPendingUsername(null);
+    setPendingPassword(null);
   };
 
   // ---------------------
@@ -96,10 +146,38 @@ const Settings: React.FC = () => {
               setActiveStatus={setActiveStatus}
               handleSave={handleSave}
               saveMessage={saveMessage}
+              onSubmit={handleAccountSubmit}
             />
           </div>
         </div>
       </Card>
+      {/* Confirm Dialog for username/password change */}
+      <AlertDialog open={showConfirm} onOpenChange={open => { if (!open) handleCancel(); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingUsername && pendingPassword && (
+                <>Are you sure you want to change your username and password?</>
+              )}
+              {pendingUsername && !pendingPassword && (
+                <>Are you sure you want to change your username?</>
+              )}
+              {!pendingUsername && pendingPassword && (
+                <>Are you sure you want to change your password?</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel asChild>
+              <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button variant="destructive" onClick={handleConfirm}>Confirm</Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Back to Homepage Button */}
       <Button
         className="fixed bottom-8 right-8 z-50 px-6 py-8 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-semibold text-lg shadow-lg transition-colors duration-200"
@@ -246,6 +324,7 @@ interface TabPanelAccountProps {
   setActiveStatus: React.Dispatch<React.SetStateAction<boolean>>;
   handleSave: () => void;
   saveMessage: string;
+  onSubmit: (e: React.FormEvent) => void;
 }
 const TabPanelAccount: React.FC<TabPanelAccountProps> = ({
   active,
@@ -259,6 +338,7 @@ const TabPanelAccount: React.FC<TabPanelAccountProps> = ({
   setActiveStatus,
   handleSave,
   saveMessage,
+  onSubmit,
 }) => (
   <div
     id="tabpanel-account"
@@ -268,7 +348,7 @@ const TabPanelAccount: React.FC<TabPanelAccountProps> = ({
   >
     {active && (
       <form
-        onSubmit={e => { e.preventDefault(); handleSave(); }}
+        onSubmit={onSubmit}
         aria-label="Account settings form"
       >
         <div className="mb-6 flex items-center justify-between bg-green-50 dark:bg-green-950 border-2 border-green-300 dark:border-green-800 rounded-xl px-4 py-3 shadow-sm">
