@@ -14,6 +14,9 @@ const HomePage = () => {
       <div>
         <Link to="/messages">Go to Messages</Link>
       </div>
+      <div>
+        <Link to="/settings">Go to Settings</Link>
+      </div>
       <Button
         variant="outline"
         className="mt-4 loading"
