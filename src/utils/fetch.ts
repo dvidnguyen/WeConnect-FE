@@ -1,5 +1,5 @@
-import type { Conversation, Message } from "../lib/mockData";
-import { mockConversations, mockUsers } from "../lib/mockData";
+import type { Conversation, Message } from "@/features/messages/types/messages.types";
+import { mockConversations, mockUsers } from "@/data/mock/messages.mock";
 
 // Đây là file service.ts để quản lý các API calls
 // Hiện tại chúng ta đang dùng mock data, nhưng sau này có thể thay thế bằng axios để gọi API thật
