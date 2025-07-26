@@ -4,8 +4,9 @@ import type { User } from '@/shared/types';
 export interface RegisterUserDTO {
   email: string;
   password: string;
-  name: string;
-  nameTag?: string;
+  username: string;
+  // Optional display name, defaults to username if not provided
+  name?: string;
 }
 
 export interface RegisterResponse {
