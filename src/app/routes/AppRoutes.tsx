@@ -1,11 +1,11 @@
-import { Route, Routes } from 'react-router-dom';
-import HomePage from '@/shared/components/layout/HomePage';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from '@/features/auth/pages/LoginPage';
 import SignUpPage from '@/features/auth/pages/SignUpPage';
 import MessagesPage from '@/features/messages/pages/MessagesPage';
-import MessageContent from '@/features/messages/components/MessageContent';
-import MessageEmpty from '@/features/messages/components/MessageEmpty';
-import { MessagesProvider } from '@/features/messages/hooks/useMessagesProvider';
+import HomePage from '@/shared/components/layout/HomePage';
+
+// TODO: Replace with proper auth check from context
+const isAuthenticated = false; // Tạm thời set true để test MessagesPage
 
 /**
  * App Routes - Định nghĩa tất cả routes của ứng dụng
@@ -14,24 +14,19 @@ import { MessagesProvider } from '@/features/messages/hooks/useMessagesProvider'
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Home route */}
-      <Route path="/" element={<HomePage />} />
-
       {/* Auth routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
-
-      {/* Messages routes - với nested routing */}
-      <Route path="/messages" element={
-        <MessagesProvider>
-          <MessagesPage />
-        </MessagesProvider>
-      }>
-        {/* Default empty state khi chưa chọn conversation */}
-        <Route index element={<MessageEmpty />} />
-        {/* Conversation detail route */}
-        <Route path=":id" element={<MessageContent />} />
-      </Route>
+      <Route path="/homepage" element={<HomePage />} />
+      {/* Protected routes */}
+      <Route path="/" element={<Navigate to="/homepage" replace />} />
+      <Route
+        path="/messages"
+        element={
+          // Only allow access to messages page if authenticated
+          isAuthenticated ? <MessagesPage /> : <Navigate to="/login" replace />
+        }
+      />
 
       {/* 404 fallback */}
       <Route path="*" element={<div>404 - Page Not Found</div>} />

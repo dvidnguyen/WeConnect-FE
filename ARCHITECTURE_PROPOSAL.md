@@ -1,285 +1,145 @@
-# WeConnect - Cấu Trúc Mới Cho Social Platform
+# 📘 Proposal: WeConnect System Architecture
 
-## 🎯 Mục tiêu
-Tái cấu trúc để mở rộng thành một social media platform hoàn chỉnh với:
-- Posts & Feed
-- Comments & Reactions
-- Messages & Chat
-- User Profiles
-- Notifications
-- Groups/Communities
+## 1. 🎯 Mục tiêu dự án
 
-## 📁 Cấu Trúc Thư Mục Đề Xuất
+WeConnect là một mạng xã hội đơn giản hướng đến trải nghiệm giao tiếp thời gian thực. Dự án cho phép người dùng kết nối, trò chuyện (text, ảnh, file, emoji, voice), gửi yêu cầu kết bạn, quản lý thông báo, và trong tương lai sẽ mở rộng thêm tính năng đăng bài như Facebook.
+
+---
+
+## 2. 🧩 Danh sách chức năng chính
+
+* Đăng ký/Đăng nhập bằng email (có xác thực qua mã 6 số)
+* Cấp JWT tự động sau khi xác thực thành công
+* Gửi/Lưu tin nhắn (text, hình, emoji, voice, file)
+* Chat nhóm (Group Chat)
+* Gửi & xử lý yêu cầu kết bạn (FriendRequest)
+* Chặn người dùng
+* Quản lý thông báo
+* (Tương lai) Đăng bài, tương tác bài viết (like, comment)
+
+---
+
+## 3. 📌 Sơ đồ Use Case (Mermaid)
+
+```mermaid
+%% Diagram đầy đủ các hành vi của người dùng đã đăng nhập
+%% Actor chính: Người dùng đã đăng nhập
+
+  usecaseDiagram
+  actor User as "Người dùng đã đăng nhập"
+
+  User --> (Đăng xuất)
+  User --> (Nhắn tin văn bản)
+  User --> (Gửi ảnh)
+  User --> (Gửi file)
+  User --> (Gửi emoji)
+  User --> (Gửi voice message)
+  User --> (Nhận thông báo)
+  User --> (Gửi yêu cầu kết bạn)
+  User --> (Chấp nhận / Từ chối lời mời)
+  User --> (Chặn người khác)
+  User --> (Tham gia nhóm chat)
+  User --> (Rời nhóm)
+  User --> (Xem hồ sơ người khác)
+  User --> (Chỉnh sửa hồ sơ cá nhân)
+```
+
+---
+
+## 4. 🏗 Kiến trúc hệ thống tổng quát
+
+* Frontend (SPA): React + TypeScript + TailwindCSS + React Router + Axios + WebSocket
+* Backend: Java Spring Boot + JPA + JWT + WebSocket (STOMP) + SendGrid
+* Database: MySQL
+* (Optional) Redis để lưu cache JWT hoặc track người dùng online
+* Kiến trúc phân tầng: Controller → Service → Repository
+
+---
+
+## 5. 🧱 Sơ đồ cơ sở dữ liệu (ERD tóm tắt)
+
+(Bản đầy đủ bạn đã vẽ, ở đây là mô tả logic)
+
+**Tables chính:**
+
+* `users`, `user_sessions`
+* `friend_requests`, `blocks`
+* `messages`, `media`
+* `groups`, `group_members`
+* `notifications`
+
+---
+
+## 6. 🔄 Luồng xử lý chính: Đăng ký → Xác minh → Cấp JWT
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant Server
+  participant MailService
+
+  Client->>Server: Đăng ký (email + password)
+  Server->>MailService: Gửi mã xác thực (6 số)
+  MailService-->>Client: Email mã xác thực
+  Client->>Server: Gửi mã xác minh
+  Server-->>Client: Kiểm tra đúng mã → Cấp JWT → Redirect vào app
+```
+
+---
+
+## 7. 📁 Cấu trúc thư mục Frontend
 
 ```
 src/
-├── app/                        # App configuration & providers
-│   ├── providers/              # Global providers
-│   │   ├── AppProvider.tsx     # Tổng hợp tất cả providers
-│   │   ├── AuthProvider.tsx    # Authentication state
-│   │   └── ThemeProvider.tsx   # Theme management
-│   ├── store/                  # Global state management (Zustand/Redux)
-│   │   ├── auth.store.ts
-│   │   ├── posts.store.ts
-│   │   └── messages.store.ts
-│   └── routes/                 # Route definitions
-│       └── AppRoutes.tsx
-│
-├── features/                   # Feature-based organization
-│   ├── auth/                   # Authentication feature
-│   │   ├── components/
+├── api/                    # API layer
+│   ├── axios.ts           # Axios instance & interceptors
+│   ├── endpoints.ts       # API endpoints
+│   └── services/          # API services by feature
+├── app/                   # App-wide configs & providers
+│   ├── providers/         # Context providers
+│   ├── store/            # State management 
+│   └── routes/           # Route definitions
+├── features/             # Feature based modules
+│   ├── auth/            # Authentication feature
+│   │   ├── components/  # Auth UI components
 │   │   │   ├── LoginForm.tsx
-│   │   │   ├── SignUpForm.tsx
-│   │   │   └── AuthLayout.tsx
-│   │   ├── hooks/
-│   │   │   ├── useAuth.ts
-│   │   │   └── useLogin.ts
-│   │   ├── services/
-│   │   │   └── auth.service.ts
-│   │   ├── types/
-│   │   │   └── auth.types.ts
-│   │   └── pages/
-│   │       ├── LoginPage.tsx
-│   │       └── SignUpPage.tsx
-│   │
-│   ├── messages/               # Messages feature
+│   │   │   └── RegisterForm.tsx
+│   │   ├── hooks/      # Auth custom hooks
+│   │   ├── services/   # Auth services
+│   │   └── types/      # Auth types
+│   ├── chat/           # Chat feature
 │   │   ├── components/
-│   │   │   ├── ChatList.tsx
-│   │   │   ├── ChatWindow.tsx
-│   │   │   ├── MessageBubble.tsx
-│   │   │   └── MessageInput.tsx
 │   │   ├── hooks/
-│   │   │   ├── useMessages.ts
-│   │   │   ├── useChat.ts
-│   │   │   └── usePagination.ts
-│   │   ├── services/
-│   │   │   └── messages.service.ts
-│   │   ├── types/
-│   │   │   └── messages.types.ts
-│   │   └── pages/
-│   │       └── MessagesPage.tsx
-│   │
-│   ├── posts/                  # Social posts feature
+│   │   └── services/
+│   ├── friends/        # Friends management
 │   │   ├── components/
-│   │   │   ├── PostCard.tsx
-│   │   │   ├── PostComments.tsx
-│   │   │   ├── PostReactions.tsx
-│   │   │   ├── CreatePost.tsx
-│   │   │   └── PostFeed.tsx
-│   │   ├── hooks/
-│   │   │   ├── usePosts.ts
-│   │   │   ├── useComments.ts
-│   │   │   └── useReactions.ts
-│   │   ├── services/
-│   │   │   ├── posts.service.ts
-│   │   │   ├── comments.service.ts
-│   │   │   └── reactions.service.ts
-│   │   ├── types/
-│   │   │   └── posts.types.ts
-│   │   └── pages/
-│   │       ├── FeedPage.tsx
-│   │       └── PostDetailPage.tsx
-│   │
-│   ├── profiles/               # User profiles feature
-│   │   ├── components/
-│   │   │   ├── ProfileCard.tsx
-│   │   │   ├── ProfileTabs.tsx
-│   │   │   └── EditProfile.tsx
-│   │   ├── hooks/
-│   │   │   └── useProfile.ts
-│   │   ├── services/
-│   │   │   └── profile.service.ts
-│   │   ├── types/
-│   │   │   └── profile.types.ts
-│   │   └── pages/
-│   │       └── ProfilePage.tsx
-│   │
-│   └── notifications/          # Notifications feature
+│   │   └── services/
+│   └── notifications/  # Notifications
 │       ├── components/
-│       │   ├── NotificationList.tsx
-│       │   └── NotificationItem.tsx
-│       ├── hooks/
-│       │   └── useNotifications.ts
-│       ├── services/
-│       │   └── notifications.service.ts
-│       ├── types/
-│       │   └── notifications.types.ts
-│       └── pages/
-│           └── NotificationsPage.tsx
-│
-├── shared/                     # Reusable across features  
-│   ├── components/             # Common UI components
-│   │   ├── ui/                 # Base UI components (shadcn/ui)
-│   │   │   ├── Button.tsx
-│   │   │   ├── Input.tsx
-│   │   │   ├── Card.tsx
-│   │   │   └── ...
-│   │   ├── layout/            # Layout components
-│   │   │   ├── Header.tsx
-│   │   │   ├── Sidebar.tsx
-│   │   │   └── Layout.tsx
-│   │   └── common/            # Common business components
-│   │       ├── Avatar.tsx
-│   │       ├── LoadingSpinner.tsx
-│   │       └── ErrorBoundary.tsx
-│   │
-│   ├── hooks/                 # Common hooks
-│   │   ├── useApi.ts
-│   │   ├── usePagination.ts
-│   │   └── useDebounce.ts
-│   │
-│   ├── utils/                 # Utility functions
-│   │   ├── api.utils.ts
-│   │   ├── date.utils.ts
-│   │   ├── format.utils.ts
-│   │   └── validation.utils.ts
-│   │
-│   ├── constants/             # App constants
-│   │   ├── routes.const.ts
-│   │   ├── api.const.ts
-│   │   └── config.const.ts
-│   │
-│   └── types/                 # Shared types
-│       ├── api.types.ts
-│       ├── common.types.ts
-│       └── index.ts
-│
-├── data/                      # Data layer
-│   ├── api/                   # API configuration
-│   │   ├── client.ts          # Axios instance
-│   │   ├── interceptors.ts    # Request/response interceptors
-│   │   └── endpoints.ts       # API endpoints
-│   │
-│   ├── mock/                  # Mock data (development)
-│   │   ├── users.mock.ts
-│   │   ├── posts.mock.ts
-│   │   └── messages.mock.ts
-│   │
-│   └── schemas/               # Data validation schemas
-│       ├── user.schema.ts
-│       ├── post.schema.ts
-│       └── message.schema.ts
-│
-└── assets/                    # Static assets
-    ├── images/
-    ├── icons/
-    └── styles/
-        ├── globals.css
-        └── components.css
+│       └── services/
+├── shared/             # Shared resources
+│   ├── components/     # Reusable components
+│   │   ├── ui/        # UI components
+│   │   └── layout/    # Layout components
+│   ├── hooks/         # Custom hooks
+│   ├── types/         # Common types
+│   └── utils/         # Utility functions
+└── assets/            # Static assets
 ```
 
-## 🔧 Naming Convention & Best Practices
+---
 
-### 1. **Feature-First Organization**
-- Mỗi feature độc lập với components, hooks, services riêng
-- Dễ maintain và scale
-- Team có thể work parallel trên các features khác nhau
+## 8. 🚀 Định hướng phát triển tương lai
 
-### 2. **Naming Convention Chuẩn**
-```typescript
-// Files
-PostCard.tsx (PascalCase cho components)
-useMessages.ts (camelCase cho hooks)
-posts.service.ts (lowercase với dots)
-posts.types.ts (lowercase với dots)
+* Tính năng **bài đăng**:
 
-// Components
-const PostCard = () => {} // PascalCase
-const useMessages = () => {} // camelCase cho hooks
+  * Tạo bài viết (text, ảnh, video)
+  * Thả cảm xúc, bình luận
+  * Hiển thị trang cá nhân như Facebook
+* Tích hợp voice/video call (sau)
+* Tối ưu performance với Redis, WebSocket Cluster
+* Responsive UI cho mobile
 
-// Services
-export const postsService = {} // camelCase
+---
 
-// Types
-interface PostData {} // PascalCase
-type MessageStatus = {} // PascalCase
-```
-
-### 3. **Hooks Organization**
-```typescript
-// Feature-specific hooks
-features/messages/hooks/useMessages.ts
-features/posts/hooks/usePosts.ts
-
-// Shared/common hooks  
-shared/hooks/useApi.ts
-shared/hooks/usePagination.ts
-```
-
-### 4. **Service Layer Chuẩn**
-```typescript
-// Consistent service structure
-export const postsService = {
-  getPosts: () => {},
-  createPost: () => {},
-  updatePost: () => {},
-  deletePost: () => {},
-  // CRUD operations
-}
-
-export const messagesService = {
-  getConversations: () => {},
-  sendMessage: () => {},
-  loadMoreMessages: () => {},
-  // Feature-specific operations
-}
-```
-
-## 🚀 Migration Plan
-
-### Phase 1: Setup New Structure
-1. Create new folder structure
-2. Move existing files to appropriate locations
-3. Update imports
-
-### Phase 2: Refactor Features
-1. Extract Messages feature → features/messages/
-2. Extract Auth → features/auth/  
-3. Create shared components
-
-### Phase 3: Add New Features
-1. Posts & Feed system
-2. Comments & Reactions
-3. User Profiles
-4. Notifications
-
-## 💡 Benefits
-
-1. **Scalability**: Dễ thêm features mới
-2. **Maintainability**: Code tổ chức rõ ràng
-3. **Team Collaboration**: Mỗi dev có thể work trên feature riêng
-4. **Reusability**: Shared components & hooks
-5. **Testing**: Dễ test từng feature độc lập
-6. **Performance**: Code splitting by features
-
-## 🎨 Component Examples
-
-### PostCard Component
-```typescript
-// features/posts/components/PostCard.tsx
-interface PostCardProps {
-  post: Post;
-  onLike: (postId: string) => void;
-  onComment: (postId: string) => void;
-  onShare: (postId: string) => void;
-}
-
-export const PostCard = ({ post, onLike, onComment, onShare }: PostCardProps) => {
-  return (
-    <Card>
-      <PostHeader user={post.author} timestamp={post.createdAt} />
-      <PostContent content={post.content} media={post.media} />
-      <PostReactions 
-        likes={post.likes}
-        comments={post.comments}
-        shares={post.shares}
-        onLike={() => onLike(post.id)}
-        onComment={() => onComment(post.id)}
-        onShare={() => onShare(post.id)}
-      />
-    </Card>
-  );
-};
-```
-
-Cấu trúc này sẽ giúp WeConnect dễ dàng mở rộng thành một social platform hoàn chỉnh! 🎯
+✍️ *Tài liệu này mô tả kiến trúc hệ thống ban đầu để nộp báo cáo và hỗ trợ nhóm phát triển. Có thể được điều chỉnh thêm tùy theo tiến độ phát triển.*

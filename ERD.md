@@ -1,135 +1,141 @@
-
-```mermaid
+```meimaid 
 erDiagram
+    %% Value Types
+    # conversation.type: "direct", "group"
+    # message.type: "text", "image", "file", "voice", "video", "sticker"
+    # message.status: "sent", "delivered", "read"
+    # friend.status: "pending", "accepted", "rejected", "blocked"
+    # file.type: "image", "video", "document", "audio", "other"
+    # notification.type: "friend_request", "new_message", "group_invite", "group_update"
+    # member.role: "admin", "member"
 
-  %% ================= USERS & AUTH =================
-  USER {
-    string id PK
-    string email
-    string password_hash
-    string username
-    string avatar_url
-    string status
-    datetime created_at
-    datetime updated_at
-  }
+    direction TB
+    USER {
+        string id PK ""  
+        string email  ""  
+        string password_hash  ""  
+        string username  ""  
+        string avatar_url  ""  
+        boolean status  ""  
+        datetime created_at  ""  
+        datetime updated_at  ""  
+    }
 
-  VERIFY_CODE {
-    string id PK
-    string user_id FK
-    string code
-    datetime expires_at
-    boolean is_used
-    datetime created_at
-  }
+	FRIEND {
+		string id PK ""  
+		string requester_id FK ""  
+		string addressee_id FK ""  
+		string status  "pending/accepted/rejected/blocked"  
+		datetime created_at  ""  
+	}
 
-  USER_SESSION {
-    string id PK
-    string user_id FK
-    string jwt_token
-    datetime created_at
-    datetime expires_at
-  }
+	BLOCKED_USER {
+		string id PK ""  
+		string user_id FK ""  
+		string blocked_user_id FK ""  
+		datetime blocked_at  ""  
+	}
 
-  %% ================= SOCIAL =================
-  FRIEND {
-    string id PK
-    string requester_id FK
-    string addressee_id FK
-    string status
-    datetime created_at
-  }
-  %% FRIEND.status = pending | accepted | declined | blocked
+	CONVERSATION {
+		string id PK ""  
+		string type  "direct/group"  
+		string name  ""  
+		string avatar  ""  
+		string created_by FK ""  
+		datetime created_at  ""  
+	}
 
-  BLOCKED_USER {
-    string id PK
-    string user_id FK
-    string blocked_user_id FK
-    datetime blocked_at
-  }
+	MESSAGE_REACTION {
+		string id PK ""  
+		string message_id FK ""  
+		string user_id FK ""  
+		string emoji  ""  
+		datetime reacted_at  ""  
+	}
 
-  %% ================= CHAT =================
-  CONVERSATION {
-    string id PK
-    string type
-    string name
-    string created_by FK
-    datetime created_at
-  }
-  %% CONVERSATION.type = private | group
+	USER_SESSION {
+		string id PK,FK ""  
+		string sessionId  ""  
+		datetime created_at  ""  
+		datetime expires_at  ""  
+	}
 
-  CONVERSATION_MEMBER {
-    string id PK
-    string conversation_id FK
-    string user_id FK
-    string role
-    datetime joined_at
-  }
-  %% CONVERSATION_MEMBER.role = admin | member
+	Invalid_TOKEN {
+		string Token PK ""  
+		datetime created_at  ""  
+		datetime expires_at  ""  
+	}
 
-  MESSAGE {
-    string id PK
-    string conversation_id FK
-    string sender_id FK
-    string type
-    string content
-    string status
-    datetime timestamp
-  }
-  %% MESSAGE.type = text | image | file | voice
-  %% MESSAGE.status = sent | delivered | read
+	MESSAGE {
+		string id PK ""  
+		string conversation_id FK ""  
+		string sender_id FK ""  
+		string type  "text/image/file/voice/video/sticker"  
+		string content  ""  
+		string status  "sent/delivered/read"  
+		datetime timestamp  ""  
+	}
 
-  MESSAGE_REACTION {
-    string id PK
-    string message_id FK
-    string user_id FK
-    string emoji
-    datetime reacted_at
-  }
+	File {
+		string id PK ""  
+		string messageId FK ""  
+		string type  "image/video/document/audio/other"  
+		string fileName  ""  
+		string url  ""  
+		string path  ""  
+		string md5checksum  ""  
+	}
 
-  READ_RECEIPT {
-    string id PK
-    string message_id FK
-    string user_id FK
-    datetime read_at
-  }
+	READ_RECEIPT {
+		string id PK ""  
+		string message_id FK ""  
+		string user_id FK ""  
+		datetime read_at  ""  
+		boolean status  ""  
+	}
 
-  %% ================= NOTIFICATION =================
-  NOTIFICATION {
-    string id PK
-    string user_id FK
+	VERIFY_CODE {
+		string id PK ""  
+		string user_id FK ""  
+		string code  ""  
+		datetime expires_at  ""  
+		boolean status  ""  
+		datetime created_at  ""  
+	}
+
+	MEMBER {
+		string id PK ""  
+		string conversation_id FK ""  
+		string user_id FK ""  
+		string role  "admin/member"  
+		datetime joined_at  ""  
+	}
+	 NOTIFICATION {
+    UUID id PK
+    UUID user_id FK
     string title
-    string body
-    string type
-    string related_id
+    text body
+    string type "friend_request/new_message/group_invite/group_update"
+    UUID related_id
     boolean is_read
     datetime created_at
-  }
-  %% NOTIFICATION.type = message | friend_request | system | ...
-  %% related_id: tuỳ theo type (message_id, friend_id, ...)
+ 	 }
 
-  %% ================= RELATIONSHIPS =================
-  USER ||--o{ VERIFY_CODE : has
-  USER ||--o{ USER_SESSION : has
-
-  USER ||--o{ FRIEND : requester
-  USER ||--o{ FRIEND : addressee
-
-  USER ||--o{ BLOCKED_USER : blocks
-  BLOCKED_USER ||--|| USER : blocked_target
-
-  USER ||--o{ CONVERSATION : creates
-  CONVERSATION ||--o{ CONVERSATION_MEMBER : has
-  USER ||--o{ CONVERSATION_MEMBER : joins
-
-  CONVERSATION ||--o{ MESSAGE : contains
-  USER ||--o{ MESSAGE : sends
-
-  MESSAGE ||--o{ MESSAGE_REACTION : has
-  USER ||--o{ MESSAGE_REACTION : reacts
-
-  MESSAGE ||--o{ READ_RECEIPT : read_by
-  USER ||--o{ READ_RECEIPT : reads
-
+	MESSAGE||--o{File:"has attachment"
+	USER||--o{VERIFY_CODE:"has"
+	USER||--o{USER_SESSION:"has"
+	USER||--o{FRIEND:"requester"
+	USER||--o{FRIEND:"addressee"
+	USER||--o{BLOCKED_USER:"blocks"
+	USER||--o{BLOCKED_USER:"is_blocked"
+	USER||--o{CONVERSATION:"creates"
+	CONVERSATION||--o{MEMBER:"has"
+	USER||--o{MEMBER:"joins"
+	CONVERSATION||--o{MESSAGE:"contains"
+	USER||--o{MESSAGE:"sends"
+	MESSAGE||--o{MESSAGE_REACTION:"has"
+	USER||--o{MESSAGE_REACTION:"reacts"
+	MESSAGE||--o{READ_RECEIPT:"read_by"
+	USER||--o{READ_RECEIPT:"reads"
   USER ||--o{ NOTIFICATION : receives
-           
+ 
