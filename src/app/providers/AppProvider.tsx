@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Toaster } from '@/shared/components/ui/sonner';
-
+import { ThemeProvider } from '@/shared/components/ThemeProvider';
 interface AppProviderProps {
   children: ReactNode;
 }
@@ -8,7 +8,9 @@ interface AppProviderProps {
 export const AppProvider = ({ children }: AppProviderProps) => {
   return (
     <>
-      {children}
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        {children}
+      </ThemeProvider>
       <Toaster />
     </>
   );
