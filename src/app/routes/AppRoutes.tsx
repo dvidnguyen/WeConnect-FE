@@ -5,7 +5,7 @@ import MessagesPage from '@/features/messages/pages/MessagesPage';
 import HomePage from '@/shared/components/layout/HomePage';
 
 // TODO: Replace with proper auth check from context
-const isAuthenticated = false; // Tạm thời set true để test MessagesPage
+const isAuthenticated = true; // Tạm thời set true để test MessagesPage
 
 /**
  * App Routes - Định nghĩa tất cả routes của ứng dụng
@@ -27,7 +27,7 @@ export const AppRoutes = () => {
           isAuthenticated ? <MessagesPage /> : <Navigate to="/login" replace />
         }
       />
-
+    
       {/* 404 fallback */}
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
