@@ -1,4 +1,3 @@
-import { GalleryVerticalEnd } from "lucide-react"
 import { ModeToggle } from "../Mode-toggle"
 import { ChartNetwork } from 'lucide-react';
 export function SidebarHeader() {

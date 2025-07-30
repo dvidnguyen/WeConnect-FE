@@ -3,7 +3,8 @@ import LoginPage from '@/features/auth/pages/LoginPage';
 import SignUpPage from '@/features/auth/pages/SignUpPage';
 import MessagesPage from '@/features/messages/pages/MessagesPage';
 import HomePage from '@/shared/components/layout/HomePage';
-
+import MessageLayout from '@/features/messages/pages/MessageLayout';
+// import MessageDetail from '@/features/messages/pages/MessageDetail';
 // TODO: Replace with proper auth check from context
 const isAuthenticated = true; // Tạm thời set true để test MessagesPage
 
@@ -20,14 +21,13 @@ export const AppRoutes = () => {
       <Route path="/homepage" element={<HomePage />} />
       {/* Protected routes */}
       <Route path="/" element={<Navigate to="/homepage" replace />} />
-      <Route
-        path="/messages"
-        element={
-          // Only allow access to messages page if authenticated
-          isAuthenticated ? <MessagesPage /> : <Navigate to="/login" replace />
-        }
-      />
-    
+
+      <Route element={<MessageLayout />}>
+        <Route path="/messages" element={<MessagesPage />} />
+        {/* Thêm các route khác trong message feature */}
+        {/* <Route path="/messages/:id" element={<MessageDetail />} />
+        <Route path="/messages/new" element={<NewMessage />} /> */}
+      </Route>
       {/* 404 fallback */}
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>

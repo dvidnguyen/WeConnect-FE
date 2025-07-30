@@ -1,4 +1,3 @@
-import { GalleryVerticalEnd } from "lucide-react"
 import { LoginForm } from "../components/LoginForm"
 import { ModeToggle } from "@/shared/components/Mode-toggle"
 import { ChartNetwork } from 'lucide-react';
@@ -10,7 +9,7 @@ export default function LoginPage() {
           <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
             <ChartNetwork />
           </div>
-         <p className="font-medium font-weight-500">WeConnect</p>
+          <p className="font-medium font-weight-500">WeConnect</p>
         </a>
         <ModeToggle />
         <LoginForm />
