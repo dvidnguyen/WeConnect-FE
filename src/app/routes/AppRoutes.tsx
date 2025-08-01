@@ -4,9 +4,10 @@ import SignUpPage from '@/features/auth/pages/SignUpPage';
 import MessagesPage from '@/features/messages/pages/MessagesPage';
 import HomePage from '@/shared/components/layout/HomePage';
 import MessageLayout from '@/features/messages/pages/MessageLayout';
+import CodeOtpForm from '@/features/auth/components/CodeOtpForm';
 // import MessageDetail from '@/features/messages/pages/MessageDetail';
 // TODO: Replace with proper auth check from context
-const isAuthenticated = true; // Tạm thời set true để test MessagesPage
+// const isAuthenticated = true; // Tạm thời set true để test MessagesPage
 
 /**
  * App Routes - Định nghĩa tất cả routes của ứng dụng
@@ -28,6 +29,7 @@ export const AppRoutes = () => {
         {/* <Route path="/messages/:id" element={<MessageDetail />} />
         <Route path="/messages/new" element={<NewMessage />} /> */}
       </Route>
+      <Route path='/otp' element={<CodeOtpForm />} />
       {/* 404 fallback */}
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>

@@ -1,18 +1,42 @@
 import { LoginForm } from "../components/LoginForm"
 import { ModeToggle } from "@/shared/components/Mode-toggle"
 import { ChartNetwork } from 'lucide-react';
+import Threads from '../../../../LOGINPAGE.TSX/Threads/Threads';
+
 export default function LoginPage() {
   return (
-    <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <a href="#" className="flex items-center gap-2 self-center font-medium">
-          <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-md">
-            <ChartNetwork />
-          </div>
-          <p className="font-medium font-weight-500">WeConnect</p>
-        </a>
+    <div className="relative min-h-svh">
+      {/* Background with Threads effect */}
+      <div className="fixed inset-0 z-0">
+        <Threads
+          amplitude={1.3}
+          distance={0.8}
+          enableMouseInteraction={false}
+          color={[0.4, 0.8, 1]} // Light blue color
+        />
+      </div>
+
+      {/* Mode Toggle */}
+      <div className="absolute right-4 top-4 md:right-8 md:top-8 cursor-pointer z-1100">
         <ModeToggle />
-        <LoginForm />
+      </div>
+
+      {/* Main Content */}
+      <div className="relative flex min-h-svh flex-col items-center justify-center px-4 z-10">
+        <div className="w-full max-w-2xl space-y-8 backdrop-blur-md bg-background/30 p-12 rounded-xl shadow-2xl">
+          {/* Logo */}
+          <div className="text-center">
+            <a href="#" className="inline-flex items-center gap-3 rounded-lg px-4 py-2 font-medium">
+              <div className="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-md">
+                <ChartNetwork className="size-8" />
+              </div>
+              <span className="text-3xl font-bold">WeConnect</span>
+            </a>
+          </div>
+
+          {/* Form */}
+          <LoginForm />
+        </div>
       </div>
     </div>
   )

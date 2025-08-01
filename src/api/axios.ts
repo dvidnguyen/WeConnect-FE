@@ -9,6 +9,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  withCredentials: true, // Cho phép gửi cookie trong request
 });
 
 // Thêm interceptor để xử lý request
