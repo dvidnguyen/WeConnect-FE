@@ -11,7 +11,7 @@ export default function SignUpPage() {
         <Threads
           amplitude={2}
           distance={0.5}
-          enableMouseInteraction={false}
+          enableMouseInteraction={true}
           color={[0.4, 0.8, 1]} // Light blue color
         />
       </div>

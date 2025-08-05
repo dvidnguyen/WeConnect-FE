@@ -1,8 +1,9 @@
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    VERIFY: '/auth/verify',
+    REGISTER: '/auth/regis',
+    VERIFYSEND: 'api/otp/send',
+    VERIFYSOTP: 'api/otp/verify',
   },
   MESSAGES: {
     LIST: '/messages',

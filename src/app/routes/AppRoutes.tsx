@@ -17,11 +17,11 @@ export const AppRoutes = () => {
   return (
     <Routes>
       {/* Auth routes */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/homepage" element={<HomePage />} />
       {/* Protected routes */}
-      <Route path="/" element={<Navigate to="/homepage" replace />} />
 
       <Route element={<MessageLayout />}>
         <Route path="/messages" element={<MessagesPage />} />

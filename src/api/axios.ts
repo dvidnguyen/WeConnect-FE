@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { interceptorLoading } from './interceptorLoading';
+import { toast } from 'sonner';
 
+// Khởi tạo axios instance
 const api = axios.create({
-  // baseURL: 'https://jsonplaceholder.typicode.com, // URL của API khi có server thật
-  baseURL: '/',
+  baseURL: 'http://localhost:8080/weconnect/',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -12,48 +13,48 @@ const api = axios.create({
   withCredentials: true, // Cho phép gửi cookie trong request
 });
 
-// Thêm interceptor để xử lý request
+// Interceptor cho request - Bật loading
 api.interceptors.request.use(
   (config) => {
+    // Bật loading indicator khi gửi request
     interceptorLoading(true);
     return config;
   },
   (error) => {
+    // Xử lý lỗi request
+    interceptorLoading(false);
     return Promise.reject(error);
   }
 );
 
-// Thêm interceptor để xử lý response
+// Interceptor cho response - Tắt loading và xử lý message
 api.interceptors.response.use(
   (response) => {
+    // Tắt loading indicator
     interceptorLoading(false);
-    return response.data;
+
+    // Hiển thị message success nếu có
+    if (response.data?.message) {
+      toast.success(response.data.message);
+    }
+
+    // Return response.data cho các API call
+    return response;
   },
   (error) => {
+    // Tắt loading indicator
     interceptorLoading(false);
+
+    // Hiển thị error message nếu có
+    if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error('An error occurred. Please try again.');
+    }
+
+    // Log lỗi cho debug
     if (error.response) {
       console.error('API Error:', error.response.data);
-
-      switch (error.response.status) {
-        case 401:
-          // Unauthorized - có thể đăng xuất người dùng
-          break;
-        case 403:
-          // Forbidden
-          break;
-        case 404:
-          // Not found
-          break;
-        case 500:
-          // Server error
-          break;
-        default:
-          break;
-      }
-    } else if (error.request) {
-      console.error('No response received:', error.request);
-    } else {
-      console.error('Request error:', error.message);
     }
 
     return Promise.reject(error);

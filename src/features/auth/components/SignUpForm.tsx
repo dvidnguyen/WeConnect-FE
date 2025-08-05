@@ -2,6 +2,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/shared/components/ui/button"
+import { useAppDispatch } from "@/app/store/hooks"
+import { setRegisterResponse } from "@/features/auth/slices/auth.slice"
 import {
   Card,
   CardContent,
@@ -12,7 +14,8 @@ import {
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { cn } from "@/shared/utils/cn.utils"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { authApi } from "@/api/auth.api"
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -30,6 +33,8 @@ export function SignUpForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const {
     register,
     handleSubmit,
@@ -40,14 +45,42 @@ export function SignUpForm({
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
-      console.log("Sign up data:", data)
-      // TODO: Implement sign up logic
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
+      // Chuẩn bị payload theo đúng format API yêu cầu
+      const registerPayload = {
+        username: data.fullName,
+        password: data.password,
+        email: data.email
+      };
+
+      // Gọi API đăng ký và chờ response
+      const response = await authApi.register(registerPayload);
+
+      console.log("Register Response:", response);
+
+      // Nếu đăng ký thành công và valid = true
+      if (response?.code === 200 && response?.result?.valid === true) {
+        // Dispatch response vào Redux store
+        dispatch(setRegisterResponse(response));
+
+        // Đợi 1.5s để hiển thị loading trên nút submit
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Chuyển hướng sang trang OTP
+        navigate('/otp', {
+          state: {
+            email: response.result.email,
+            message: "Please check your email for verification code"
+          }
+        });
+      } else {
+        // Log lỗi nếu response không thành công hoặc không valid
+        console.warn("Register not valid:", response);
+      }
     } catch (error) {
-      console.error("Sign up error:", error)
+      // Error đã được xử lý ở interceptor
+      console.error("Register error:", error);
     }
   }
-
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
