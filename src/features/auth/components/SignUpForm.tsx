@@ -55,13 +55,22 @@ export function SignUpForm({
       // Gọi API đăng ký và chờ response
       const response = await authApi.register(registerPayload);
 
-      console.log("Register Response:", response);
+      // console.log("Register Response:", response);
 
       // Nếu đăng ký thành công và valid = true
       if (response?.code === 200 && response?.result?.valid === true) {
         // Dispatch response vào Redux store
         dispatch(setRegisterResponse(response));
-
+        // Gọi API gửi OTP ngay sau khi đăng ký thành công
+        try {
+          console.log("Sending OTP to email:", response.result.email);
+          await authApi.sendOtp(response.result.email);
+          console.log("OTP sent successfully");
+        } catch (otpError) {
+          console.error("Failed to send OTP:", otpError);
+          // Vẫn tiếp tục flow ngay cả khi gửi OTP thất bại
+        }
+        
         // Đợi 1.5s để hiển thị loading trên nút submit
         await new Promise(resolve => setTimeout(resolve, 1500));
 

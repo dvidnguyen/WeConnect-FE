@@ -5,6 +5,8 @@ import MessagesPage from '@/features/messages/pages/MessagesPage';
 import HomePage from '@/shared/components/layout/HomePage';
 import MessageLayout from '@/features/messages/pages/MessageLayout';
 import CodeOtpForm from '@/features/auth/components/CodeOtpForm';
+import { AuthRoute } from '@/app/routes/AuthRoute';
+import { ProtectedRoute } from '@/app/routes//ProtectedRoute';
 // import MessageDetail from '@/features/messages/pages/MessageDetail';
 // TODO: Replace with proper auth check from context
 // const isAuthenticated = true; // Tạm thời set true để test MessagesPage
@@ -16,20 +18,27 @@ import CodeOtpForm from '@/features/auth/components/CodeOtpForm';
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Auth routes */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignUpPage />} />
+      {/* Public route */}
       <Route path="/homepage" element={<HomePage />} />
-      {/* Protected routes */}
 
-      <Route element={<MessageLayout />}>
-        <Route path="/messages" element={<MessagesPage />} />
-        {/* Thêm các route khác trong message feature */}
-        {/* <Route path="/messages/:id" element={<MessageDetail />} />
-        <Route path="/messages/new" element={<NewMessage />} /> */}
+      {/* Auth routes - không cho phép user đã đăng nhập truy cập */}
+      <Route element={<AuthRoute />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/otp" element={<CodeOtpForm />} />
       </Route>
-      <Route path='/otp' element={<CodeOtpForm />} />
+
+      {/* Protected routes - yêu cầu đăng nhập */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<MessageLayout />}>
+          <Route path="/messages" element={<MessagesPage />} />
+          {/* Các route messages khác */}
+        </Route>
+      </Route>
+
+      {/* Redirect root to login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
       {/* 404 fallback */}
       <Route path="*" element={<div>404 - Page Not Found</div>} />
     </Routes>
