@@ -10,8 +10,11 @@ import {
 } from "@/shared/components/ui/dropdown-menu"
 import { Button } from "@/shared/components/ui/button"
 import { LogOut, Settings, User } from "lucide-react"
+import { useState } from "react"
+import { UserProfileDialog } from "../profile/user-profile-dialog"
 
 export function SidebarFooter() {
+  const [showProfile, setShowProfile] = useState(false)
   return (
     <div className="border-t p-4">
       <DropdownMenu>
@@ -35,7 +38,7 @@ export function SidebarFooter() {
         <DropdownMenuContent className="w-56" align="end" side="top">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setShowProfile(true)}>
             <User className="mr-2 h-4 w-4" />
             Profile
           </DropdownMenuItem>
@@ -50,6 +53,7 @@ export function SidebarFooter() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <UserProfileDialog open={showProfile} onOpenChange={setShowProfile} />
     </div>
   )
 }
