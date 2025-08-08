@@ -1,18 +1,31 @@
-import { useState } from 'react'
-
+import { useState,useEffect } from 'react'
 import { useTheme } from "@/shared/components/ThemeProvider"
 import { MoonIcon, SunIcon } from 'lucide-react'
-
 import { Label } from '@/shared//components/ui/label'
 import { Switch } from '@/shared//components/ui/switch'
 export function ModeToggle() {
   const { setTheme } = useTheme()
-  const [checked, setChecked] = useState<boolean>(true)
+  const [checked, setChecked] = useState<boolean>(() => {
+    // Lấy theme từ localStorage hoặc default là dark
+    const savedTheme = localStorage.getItem('theme') || 'dark'
+    return savedTheme === 'dark'
+  })
+
+  useEffect(() => {
+    // Khi component mount, set theme từ localStorage
+    const savedTheme = localStorage.getItem('theme') || 'dark'
+    setTheme(savedTheme)
+    setChecked(savedTheme === 'dark')
+  }, [setTheme])
 
   const handleThemeChange = (isChecked: boolean) => {
-    setChecked(isChecked);
-    setTheme(isChecked ? "dark" : "light");
+    const newTheme = isChecked ? 'dark' : 'light'
+    setChecked(isChecked)
+    setTheme(newTheme)
+    // Lưu theme vào localStorage
+    localStorage.setItem('theme', newTheme)
   }
+
 
   return (
     <>

@@ -5,7 +5,7 @@ import { ChartNetwork } from 'lucide-react';
 
 export default function SignUpPage() {
   return (
-    <div className="relative min-h-svh">
+    <div className="relative h-screen w-full overflow-hidden">
       {/* Background with Threads effect */}
       <div className="fixed inset-0 z-0">
         <Threads
@@ -17,13 +17,13 @@ export default function SignUpPage() {
       </div>
 
       {/* Mode Toggle */}
-      <div className="absolute right-4 top-4 md:right-8 md:top-8 cursor-pointer z-1100">
+      <div className="absolute right-2 top-2 sm:right-4 sm:top-4 md:right-8 md:top-8 z-50">
         <ModeToggle />
       </div>
 
       {/* Main Content */}
-      <div className="relative flex min-h-svh flex-col items-center justify-center px-4 z-10">
-        <div className="w-full max-w-2xl space-y-8 backdrop-blur-md bg-background/30 p-12 rounded-xl shadow-2xl">
+      <div className="relative flex h-full items-center justify-center  sm:p-4 md:p-6 z-10">
+        <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl mx-auto backdrop-blur-md bg-background/30 rounded-xl shadow-2xl p-4 sm:p-6 md:p-8 lg:p-12 max-h-[90vh] overflow-y-auto">
           {/* Logo */}
           <div className="text-center">
             <a href="#" className="inline-flex items-center gap-3 rounded-lg px-4 py-2 font-medium">

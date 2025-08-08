@@ -45,10 +45,17 @@ interface UserData {
   email: string
   name: string
   avatar?: string
+  token?: string // Thêm token cho login response
+}
+
+interface LoginResponse extends ApiResponse<UserData> {
+  data: UserData & {
+    token: string // Đảm bảo token luôn có trong login response
+  }
 }
 
 export const authApi = {
-  login: async (payload: LoginPayload): Promise<ApiResponse<UserData>> => {
+  login: async (payload: LoginPayload): Promise<LoginResponse> => {
     const response = await api.post(API_ENDPOINTS.AUTH.LOGIN, payload)
     return response.data
   },

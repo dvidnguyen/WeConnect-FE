@@ -5,7 +5,7 @@ import Threads from '../../../../LOGINPAGE.TSX/Threads/Threads';
 
 export default function LoginPage() {
   return (
-    <div className="relative min-h-svh">
+    <div className="relative min-h-svh ">
       {/* Background with Threads effect */}
       <div className="fixed inset-0 z-0">
         <Threads

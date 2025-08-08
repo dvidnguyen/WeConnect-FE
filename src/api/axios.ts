@@ -18,6 +18,13 @@ api.interceptors.request.use(
   (config) => {
     // Bật loading indicator khi gửi request
     interceptorLoading(true);
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Trả về config đã chỉnh sửa
     return config;
   },
   (error) => {
@@ -37,7 +44,6 @@ api.interceptors.response.use(
     if (response.data?.message) {
       toast.success(response.data.message);
     }
-
     // Return response.data cho các API call
     return response;
   },

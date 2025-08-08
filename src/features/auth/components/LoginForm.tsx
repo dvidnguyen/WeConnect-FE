@@ -12,7 +12,9 @@ import {
 } from "@/shared/components/ui/card"
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { toast } from "sonner"
+import { authApi } from "@/api/auth.api"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -25,6 +27,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const navigate = useNavigate()
   const {
     register,
     handleSubmit,
@@ -35,27 +38,50 @@ export function LoginForm({
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      console.log("Login data:", data)
-      // TODO: Implement login logic
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
-    } catch (error) {
+      const response = await authApi.login({
+        email: data.email,
+        password: data.password
+      })
+
+      // Kiểm tra response thành công
+      if (response?.success) {
+        // Lưu token vào localStorage
+        if (response.data?.token) {
+          localStorage.setItem('token', response.data.token)
+        }
+
+        toast.success(response.message || 'Login successful!')
+
+        // Đợi 1.2s để hiển thị toast và loading state
+        await new Promise(resolve => setTimeout(resolve, 1200))
+
+        // Redirect tới trang messages
+        navigate('/messages')
+      } else {
+        toast.error(response.message || 'Login failed')
+      }
+    } catch (error: unknown) {
       console.error("Login error:", error)
+
+      // Hiển thị error message từ server hoặc generic message
+      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.'
+      toast.error(errorMessage)
     }
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-4", className)} {...props}>
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-lg">Welcome back</CardTitle>
           <CardDescription>
             Login with your Apple or Google account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid gap-6">
-              <div className="flex flex-col gap-4">
+            <div className="grid gap-4">
+              <div className="flex flex-col gap-3">
                 <Button type="button" variant="outline" className="w-full">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                     <path
@@ -75,14 +101,14 @@ export function LoginForm({
                   Login with Google
                 </Button>
               </div>
-              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+              <div className="after:border-border relative text-center text-xs after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                 <span className="bg-card text-muted-foreground relative z-10 px-2">
                   Or continue with
                 </span>
               </div>
-              <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <Label htmlFor="email">Email</Label>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email" className="text-sm">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -91,15 +117,15 @@ export function LoginForm({
                     aria-invalid={!!errors.email}
                   />
                   {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email.message}</p>
+                    <p className="text-xs text-destructive">{errors.email.message}</p>
                   )}
                 </div>
-                <div className="grid gap-3">
+                <div className="grid gap-2">
                   <div className="flex items-center">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password" className="text-sm">Password</Label>
                     <a
                       href="#"
-                      className="ml-auto text-sm underline-offset-4 hover:underline"
+                      className="ml-auto text-xs underline-offset-4 hover:underline"
                     >
                       Forgot your password?
                     </a>
@@ -111,14 +137,14 @@ export function LoginForm({
                     aria-invalid={!!errors.password}
                   />
                   {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password.message}</p>
+                    <p className="text-xs text-destructive">{errors.password.message}</p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
                   {isSubmitting ? "Logging in..." : "Login"}
                 </Button>
               </div>
-              <div className="text-center text-sm">
+              <div className="text-center text-xs">
                 Don&apos;t have an account?{" "}
                 <Link to="/signup" className="underline underline-offset-4">
                   Sign up

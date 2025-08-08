@@ -45,7 +45,7 @@ export function SignUpForm({
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
-      // Chuẩn bị payload theo đúng format API yêu cầu
+      // Chuẩn bị payload the form api yêu cầu 
       const registerPayload = {
         username: data.fullName,
         password: data.password,
@@ -70,7 +70,7 @@ export function SignUpForm({
           console.error("Failed to send OTP:", otpError);
           // Vẫn tiếp tục flow ngay cả khi gửi OTP thất bại
         }
-        
+
         // Đợi 1.5s để hiển thị loading trên nút submit
         await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -91,18 +91,18 @@ export function SignUpForm({
     }
   }
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-4", className)} {...props}>
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Create an account</CardTitle>
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-lg">Create an account</CardTitle>
           <CardDescription>
-            Sign up with your  Google account
+            Sign up with your Google account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid gap-6">
-              <div className="flex flex-col gap-4">
+            <div className="grid gap-4">
+              <div className="flex flex-col gap-3">
 
                 <Button variant="outline" className="w-full">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -114,14 +114,14 @@ export function SignUpForm({
                   Sign up with Google
                 </Button>
               </div>
-              <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
+              <div className="after:border-border relative text-center text-xs after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                 <span className="bg-card text-muted-foreground relative z-10 px-2">
                   Or continue with
                 </span>
               </div>
-              <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <Label htmlFor="fullName">Full Name</Label>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="fullName" className="text-sm">Full Name</Label>
                   <Input
                     id="fullName"
                     type="text"
@@ -130,11 +130,11 @@ export function SignUpForm({
                     aria-invalid={!!errors.fullName}
                   />
                   {errors.fullName && (
-                    <p className="text-sm text-destructive">{errors.fullName.message}</p>
+                    <p className="text-xs text-destructive">{errors.fullName.message}</p>
                   )}
                 </div>
-                <div className="grid gap-3">
-                  <Label htmlFor="email">Email</Label>
+                <div className="grid gap-2">
+                  <Label htmlFor="email" className="text-sm">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -143,11 +143,11 @@ export function SignUpForm({
                     aria-invalid={!!errors.email}
                   />
                   {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email.message}</p>
+                    <p className="text-xs text-destructive">{errors.email.message}</p>
                   )}
                 </div>
-                <div className="grid gap-3">
-                  <Label htmlFor="password">Password</Label>
+                <div className="grid gap-2">
+                  <Label htmlFor="password" className="text-sm">Password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -155,11 +155,11 @@ export function SignUpForm({
                     aria-invalid={!!errors.password}
                   />
                   {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password.message}</p>
+                    <p className="text-xs text-destructive">{errors.password.message}</p>
                   )}
                 </div>
-                <div className="grid gap-3">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="grid gap-2">
+                  <Label htmlFor="confirmPassword" className="text-sm">Confirm Password</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -167,14 +167,14 @@ export function SignUpForm({
                     aria-invalid={!!errors.confirmPassword}
                   />
                   {errors.confirmPassword && (
-                    <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                    <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
                   {isSubmitting ? "Creating account..." : "Create account"}
                 </Button>
               </div>
-              <div className="text-center text-sm">
+              <div className="text-center text-xs">
                 Already have an account?{" "}
                 <Link to="/login" className="underline underline-offset-4">
                   Sign in
