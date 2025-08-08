@@ -16,12 +16,6 @@ const friendRequests = [
 
 const FriendRequestPage = () => {
   const [requests, setRequests] = useState(friendRequests);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredRequests = requests.filter(request => 
-    request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    request.message.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const handleAccept = (id: number) => {
     setRequests(requests.filter(req => req.id !== id));
@@ -36,47 +30,41 @@ const FriendRequestPage = () => {
   return (
         <div className="flex flex-col items-center h-screen p-4 transition-colors">
       <div className="w-full max-w-7xl mx-auto h-full flex flex-col">
-        <div className="sticky top-0 z-10 bg-white dark:bg-black pb-8 pt-2">
-          <h1 className="text-xl font-semibold mb-6 text-gray-900 dark:text-gray-100 flex items-center">
+        <div className="sticky top-0 z-10 bg-white dark:bg-black pb-6 pt-2">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
             <span>Lời mời đã nhận</span>
             <span className="ml-2 text-blue-500 dark:text-blue-400">({requests.length})</span>
           </h1>
-          <div className="flex justify-center gap-3 backdrop-blur-sm bg-white/50 dark:bg-black/50 p-2 rounded-2xl">
-            <div className="relative w-full max-w-md">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm kiếm bạn bè..."
-                className="w-full px-6 py-3 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#23232a] text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-base shadow-sm"
-              />
-            </div>
-            <Button
-              type="button"
-              className="bg-white dark:bg-[#23232a] hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-full px-6 py-2 min-w-[120px]"
-              variant="outline"
-            >
-              Tìm kiếm
-            </Button>
-          </div>
         </div>
         
-        {filteredRequests.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Không có lời mời kết bạn nào
+        {requests.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 animate-fadeIn">
+              <div className="w-24 h-24 mb-6 text-gray-300 dark:text-gray-600 animate-float">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" 
+                  className="transform transition-all duration-700 hover:scale-110 hover:text-blue-400 dark:hover:text-blue-500 cursor-pointer">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2 animate-fadeSlideUp delay-100">
+                Chưa có lời mời kết bạn nào
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 text-center max-w-sm animate-fadeSlideUp delay-200 hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-300">
+                Hãy chia sẻ mã QR hoặc liên kết hồ sơ của bạn để kết nối với nhiều bạn bè hơn
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 justify-items-center overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 dark:hover:scrollbar-thumb-gray-500 scrollbar-track-transparent">
-            {filteredRequests.map(request => (
+            {requests.map(request => (
               <div 
                 key={request.id}
-                className="bg-white dark:bg-[#23232a] rounded-md shadow-sm border dark:border-gray-700 p-6 mb-4 w-full max-w-md transform transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+                className="bg-white dark:bg-[#23232a] rounded-md shadow-sm border dark:border-gray-700 p-6 mb-4 w-full max-w-md transform transition-all duration-500 hover:shadow-lg hover:-translate-y-2 animate-fadeSlideUp"
+                style={{animationDelay: `${request.id * 100}ms`}}
               >
                 <div className="flex flex-col items-center text-center">
                   <img
                     src={request.avatar}
                     alt={request.name}
-                    className="w-16 h-16 rounded-full object-cover border dark:border-gray-700 mb-3 transform transition-transform duration-300 hover:scale-105"
+                    className="w-16 h-16 rounded-full object-cover border dark:border-gray-700 mb-3 transform transition-all duration-500 hover:scale-110 hover:shadow-xl hover:rotate-3"
                   />
                   <div className="space-y-2">
                     <h3 className="font-medium text-gray-900 dark:text-gray-100">{request.name}</h3>
