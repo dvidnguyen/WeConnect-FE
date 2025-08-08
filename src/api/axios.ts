@@ -10,7 +10,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true, // Cho phép gửi cookie trong request
+  withCredentials: true, // Cho phép gửi thông tin kèm cookie trong request
 });
 
 // Interceptor cho request - Bật loading

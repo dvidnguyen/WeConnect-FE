@@ -30,6 +30,15 @@ interface ApiResponse<T = any> {
   success: boolean
   message: string
   data?: T
+  code?: number
+  result?: any
+}
+
+interface VerifyOtpResponse extends ApiResponse {
+  code: number
+  result: {
+    token: string
+  }
 }
 
 interface UserData {
@@ -59,7 +68,7 @@ export const authApi = {
     return response.data
   },
 
-  verifyOtp: async (payload: VerifyOtpPayload): Promise<ApiResponse> => {
+  verifyOtp: async (payload: VerifyOtpPayload): Promise<VerifyOtpResponse> => {
     const response = await api.post(API_ENDPOINTS.AUTH.VERIFYSOTP, payload)
     return response.data
   }

@@ -2,17 +2,29 @@ import { useEffect, useId, useState } from 'react'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/shared/components/ui/input-otp'
 import { ModeToggle } from '@/shared/components/Mode-toggle'
 import Threads from '../../../../LOGINPAGE.TSX/Threads/Threads'
-import { ChartNetwork } from 'lucide-react';
+import { ChartNetwork } from 'lucide-react'
+import { Button } from '@/shared/components/ui/button'
+import { cn } from '@/shared/utils/cn.utils'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { authApi } from '@/api/auth.api'
+import { useAppSelector } from '@/app/store/hooks'
 
-interface CodeOtpFormProps {
-  email?: string;
-}
-
-const CodeOtpForm = ({ email = "william@example.com" }: CodeOtpFormProps) => {
+const CodeOtpForm = () => {
+  const navigate = useNavigate()
+  const email = useAppSelector((state) => state.auth.tempEmail)
   const [timeLeft, setTimeLeft] = useState(300)
   const [otp, setOtp] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
   const id = useId()
+
+  useEffect(() => {
+    if (!email) {
+      toast.error('Please sign up first')
+      navigate('/signup')
+    }
+  }, [email, navigate])
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -34,42 +46,63 @@ const CodeOtpForm = ({ email = "william@example.com" }: CodeOtpFormProps) => {
   const handleVerifyOtp = async (otpValue: string) => {
     try {
       setIsLoading(true)
-      // Gọi API verify OTP 
-      console.log('Verifying OTP:', otpValue, 'for email:', email)
 
-      // Mô phỏng call API
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (!email) {
+        toast.error('Email not found, please sign up first')
+        navigate('/signup')
+        return
+      }
 
-      // Sau khi verify thành công, bạn có thể:
-      // 1. Redirect user
-      // 2. Show success message
-      // 3. Update user state
-      console.log('OTP verified successfully')
+      const response = await authApi.verifyOtp({
+        email: email,
+        otp: otpValue
+      });
+
+      if (response?.code === 200) {
+        // Lưu JWT token vào localStorage hoặc state management
+        localStorage.setItem('token', response.result.token);
+
+        toast.success('Email verified successfully!');
+
+        // Đợi 1s để người dùng thấy toast message
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Redirect to messages page
+        navigate('/messages');
+      }
 
     } catch (error) {
       console.error('Failed to verify OTP:', error)
-      // Xử lý error ở đây
+      setIsError(true)
+      toast.error('Invalid verification code. Please try again.');
+      setTimeout(() => setIsError(false), 820)
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Auto submit when OTP is complete
   const handleComplete = (value: string) => {
     setOtp(value)
-    handleVerifyOtp(value)
+    if (value.length === 6) {
+      handleVerifyOtp(value)
+    }
   }
 
   const handleResend = async () => {
     try {
+      if (!email) {
+        toast.error('Email not found, please sign up first')
+        navigate('/signup')
+        return
+      }
+
       setIsLoading(true)
-      // Gọi API resend OTP ở đây
-      console.log('Resending OTP to:', email)
+      // Call resend OTP API
+      await authApi.sendOtp(email)
 
-      // Mô phỏng call API
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
+      toast.success('Verification code resent!')
       setTimeLeft(60)
-      console.log('OTP resent successfully')
 
     } catch (error) {
       console.error('Failed to resend OTP:', error)
@@ -120,23 +153,36 @@ const CodeOtpForm = ({ email = "william@example.com" }: CodeOtpFormProps) => {
 
             {/* OTP Input */}
             <div className="space-y-6 flex items-center justify-center flex-col">
-              <InputOTP
-                id={id}
-                maxLength={6}
-                value={otp}
-                onChange={setOtp}
-                onComplete={handleComplete}
-                disabled={isLoading}
-              >
-                <InputOTPGroup className='gap-2 *:data-[active=true]:ring-0 *:data-[slot=input-otp-slot]:rounded-none *:data-[slot=input-otp-slot]:border-0 *:data-[slot=input-otp-slot]:border-b-2 *:data-[slot=input-otp-slot]:shadow-none *:dark:data-[slot=input-otp-slot]:bg-transparent'>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
+              <div className={cn("space-y-6", { "animate-shake": isError })}>
+                <InputOTP
+                  id={id}
+                  maxLength={6}
+                  value={otp}
+                  onChange={(value) => {
+                    const numericValue = value.replace(/[^0-9]/g, "")
+                    setOtp(numericValue)
+                  }}
+                  onComplete={handleComplete}
+                  disabled={isLoading}
+                >
+                  <InputOTPGroup className='gap-2 *:data-[active=true]:ring-0 *:data-[slot=input-otp-slot]:rounded-none *:data-[slot=input-otp-slot]:border-0 *:data-[slot=input-otp-slot]:border-b-2 *:data-[slot=input-otp-slot]:shadow-none *:dark:data-[slot=input-otp-slot]:bg-transparent'>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+
+                <Button
+                  className="w-full"
+                  onClick={() => handleVerifyOtp(otp)}
+                  disabled={isLoading || otp.length !== 6}
+                >
+                  {isLoading ? 'Verifying...' : 'Verify Email'}
+                </Button>
+              </div>
 
               {/* Can't find email note */}
               <p className="text-xs text-muted-foreground">
