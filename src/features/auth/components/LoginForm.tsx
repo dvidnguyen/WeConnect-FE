@@ -15,10 +15,12 @@ import { Label } from "@/shared/components/ui/label"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { authApi } from "@/api/auth.api"
+import { useAppDispatch } from "@/app/store/hooks"
+import { setUser } from "@/features/auth/slices/auth.slice"
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
@@ -28,6 +30,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const {
     register,
     handleSubmit,
@@ -38,21 +41,29 @@ export function LoginForm({
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      console.log('Login payload:', {
+        email: data.email,
+        password: data.password
+      })
       const response = await authApi.login({
         email: data.email,
         password: data.password
       })
 
       // Kiểm tra response thành công
-      if (response?.success) {
+      if (response?.code === 200 && response?.result) {
+        const { token } = response.result;
+
         // Lưu token vào localStorage
-        if (response.data?.token) {
-          localStorage.setItem('token', response.data.token)
-        }
+        localStorage.setItem('token', token);
 
-        toast.success(response.message || 'Login successful!')
+        // Chỉ lưu email và username vào Redux store
+        dispatch(setUser({
+          email: response.result.email,
+          username: response.result.username
+        }));
 
-        // Đợi 1.2s để hiển thị toast và loading state
+        toast.success('Login successful!')        // Đợi 1.2s để hiển thị toast và loading state
         await new Promise(resolve => setTimeout(resolve, 1200))
 
         // Redirect tới trang messages
@@ -137,7 +148,7 @@ export function LoginForm({
                     aria-invalid={!!errors.password}
                   />
                   {errors.password && (
-                    <p className="text-xs text-destructive">{errors.password.message}</p>
+                    <p className="text-xs text-destructive ">{errors.password.message}</p>
                   )}
                 </div>
                 <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>

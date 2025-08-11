@@ -30,7 +30,7 @@ const FriendRequestPage = () => {
   return (
         <div className="flex flex-col items-center h-screen p-4 transition-colors">
       <div className="w-full max-w-7xl mx-auto h-full flex flex-col">
-        <div className="sticky top-0 z-10 bg-white dark:bg-black pb-6 pt-2">
+        <div className="sticky top-0 z-10 pb-6 pt-2">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
             <span>Lời mời đã nhận</span>
             <span className="ml-2 text-blue-500 dark:text-blue-400">({requests.length})</span>

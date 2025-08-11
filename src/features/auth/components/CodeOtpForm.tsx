@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useState, useRef } from 'react'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/shared/components/ui/input-otp'
 import { ModeToggle } from '@/shared/components/Mode-toggle'
 import Threads from '../../../../LOGINPAGE.TSX/Threads/Threads'
@@ -13,11 +13,34 @@ import { useAppSelector } from '@/app/store/hooks'
 const CodeOtpForm = () => {
   const navigate = useNavigate()
   const email = useAppSelector((state) => state.auth.tempEmail)
-  const [timeLeft, setTimeLeft] = useState(300)
   const [otp, setOtp] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isError, setIsError] = useState(false)
+  const timerRef = useRef<{ timeLeft: number, timerId: NodeJS.Timeout | null }>({ timeLeft: 300, timerId: null })
+  const timerDisplayRef = useRef<HTMLSpanElement>(null)
   const id = useId()
+
+  const startTimer = () => {
+    // Clear any existing timer
+    if (timerRef.current.timerId) {
+      clearInterval(timerRef.current.timerId)
+    }
+
+    // Start new timer if time is remaining
+    if (timerRef.current.timeLeft > 0) {
+      timerRef.current.timerId = setInterval(() => {
+        timerRef.current.timeLeft -= 1
+        updateResendButton()
+
+        if (timerRef.current.timeLeft <= 0) {
+          if (timerRef.current.timerId) {
+            clearInterval(timerRef.current.timerId)
+          }
+          updateResendButton()
+        }
+      }, 1000)
+    }
+  }
 
   useEffect(() => {
     if (!email) {
@@ -27,20 +50,25 @@ const CodeOtpForm = () => {
   }, [email, navigate])
 
   useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => {
-        setTimeLeft(prev => prev - 1)
-      }, 1000)
+    startTimer()
+    updateResendButton()
 
-      return () => clearTimeout(timer)
+    return () => {
+      if (timerRef.current.timerId) {
+        clearInterval(timerRef.current.timerId)
+      }
     }
-  }, [timeLeft])
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }, [])  
+    const updateResendButton = () => {
+    if (timerDisplayRef.current) {
+      if (timerRef.current.timeLeft > 0) {
+        const mins = Math.floor(timerRef.current.timeLeft / 60)
+        const secs = timerRef.current.timeLeft % 60
+        timerDisplayRef.current.textContent = `Resend available in ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+      } else {
+        timerDisplayRef.current.textContent = 'Resend code'
+      }
+    }
   }
 
   const handleVerifyOtp = async (otpValue: string) => {
@@ -102,7 +130,8 @@ const CodeOtpForm = () => {
       await authApi.sendOtp(email)
 
       toast.success('Verification code resent!')
-      setTimeLeft(60)
+      timerRef.current.timeLeft = 60
+      startTimer()
 
     } catch (error) {
       console.error('Failed to resend OTP:', error)
@@ -191,9 +220,8 @@ const CodeOtpForm = () => {
 
               {/* Resend Timer */}
               <p className="text-muted-foreground text-xs">
-                {timeLeft > 0 ? (
-                  `Resend available in ${formatTime(timeLeft)}`
-                ) : (
+                <span ref={timerDisplayRef}>Resend available in 05:00</span>
+                {timerRef.current.timeLeft <= 0 && (
                   <button
                     onClick={(e) => {
                       e.preventDefault()

@@ -14,9 +14,7 @@ import FriendRequestLayout from '@/features/friends/pages/requests/pages/FriendR
 import { AuthRoute } from '@/app/routes/AuthRoute';
 import { ProtectedRoute } from '@/app/routes//ProtectedRoute';
 
-// import MessageDetail from '@/features/messages/pages/MessageDetail';
-// TODO: Replace with proper auth check from context
-// const isAuthenticated = true; // Tạm thời set true để test MessagesPage
+
 
 /**
  * App Routes - Định nghĩa tất cả routes của ứng dụng

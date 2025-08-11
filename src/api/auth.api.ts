@@ -78,5 +78,9 @@ export const authApi = {
   verifyOtp: async (payload: VerifyOtpPayload): Promise<VerifyOtpResponse> => {
     const response = await api.post(API_ENDPOINTS.AUTH.VERIFYSOTP, payload)
     return response.data
+  },
+  logout: async (token: string): Promise<VerifyOtpResponse> => {
+    const response = await api.post(API_ENDPOINTS.AUTH.LOGOUT, { token })
+    return response.data
   }
 }

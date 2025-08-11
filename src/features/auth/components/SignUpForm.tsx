@@ -3,7 +3,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/shared/components/ui/button"
 import { useAppDispatch } from "@/app/store/hooks"
-import { setRegisterResponse } from "@/features/auth/slices/auth.slice"
+import { toast } from "sonner"
+import { useId, useMemo, useState } from 'react'
+import { CheckIcon, XIcon } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -17,14 +19,25 @@ import { cn } from "@/shared/utils/cn.utils"
 import { Link, useNavigate } from "react-router-dom"
 import { authApi } from "@/api/auth.api"
 
+const requirements = [
+  { regex: /.{8,}/, text: 'At least 8 characters' },
+  { regex: /[a-z]/, text: 'At least 1 lowercase letter' },
+  { regex: /[A-Z]/, text: 'At least 1 uppercase letter' },
+  { regex: /[0-9]/, text: 'At least 1 number' },
+  {
+    regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/,
+    text: 'At least 1 special character'
+  }
+]
+
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+  password: z.string().min(8, "Password must be at least 8 characters")
+    .regex(/[a-z]/, "Password must contain at least 1 lowercase letter")
+    .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
+    .regex(/[0-9]/, "Password must contain at least 1 number")
+    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, "Password must contain at least 1 special character")
 })
 
 type SignUpFormData = z.infer<typeof signUpSchema>
@@ -35,59 +48,97 @@ export function SignUpForm({
 }: React.ComponentProps<"div">) {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const [isVisible, setIsVisible] = useState(false)
+  const [password, setPassword] = useState('')
+  const id = useId()
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
   })
 
+  const currentPassword = watch('password')
+
+  const strength = useMemo(() => requirements.map(req => ({
+    met: req.regex.test(currentPassword || ''),
+    text: req.text
+  })), [currentPassword])
+
+  const strengthScore = useMemo(() => {
+    return strength.filter(req => req.met).length
+  }, [strength])
+
+  const getColor = (score: number) => {
+    if (score === 0) return 'bg-border'
+    if (score <= 1) return 'bg-destructive'
+    if (score <= 2) return 'bg-orange-500'
+    if (score <= 3) return 'bg-amber-500'
+    if (score === 4) return 'bg-yellow-400'
+    return 'bg-green-500'
+  }
+
+  const getText = (score: number) => {
+    if (score === 0) return 'Enter a password'
+    if (score <= 2) return 'Weak password'
+    if (score <= 3) return 'Medium password'
+    if (score === 4) return 'Strong password'
+    return 'Very strong password'
+  }
+
   const onSubmit = async (data: SignUpFormData) => {
     try {
-      // Chuẩn bị payload the form api yêu cầu 
-      const registerPayload = {
-        username: data.fullName,
-        password: data.password,
-        email: data.email
-      };
+      await toast.promise(
+        async () => {
+          // Chuẩn bị payload cho form api yêu cầu 
+          const registerPayload = {
+            username: data.fullName,
+            password: data.password,
+            email: data.email
+          };
 
-      // Gọi API đăng ký và chờ response
-      const response = await authApi.register(registerPayload);
+          // Gọi API đăng ký và chờ response
+          const response = await authApi.register(registerPayload);
 
-      // console.log("Register Response:", response);
+          console.log('Register response:', response);
 
-      // Nếu đăng ký thành công và valid = true
-      if (response?.code === 200 && response?.result?.valid === true) {
-        // Dispatch response vào Redux store
-        dispatch(setRegisterResponse(response));
-        // Gọi API gửi OTP ngay sau khi đăng ký thành công
-        try {
-          console.log("Sending OTP to email:", response.result.email);
-          await authApi.sendOtp(response.result.email);
-          console.log("OTP sent successfully");
-        } catch (otpError) {
-          console.error("Failed to send OTP:", otpError);
-          // Vẫn tiếp tục flow ngay cả khi gửi OTP thất bại
-        }
+          // Nếu đăng ký thành công và valid = true
+          if (response?.code === 200 && response?.result?.valid === true) {
+            // Dispatch response vào Redux store
+            dispatch(setRegisterResponse(response));
 
-        // Đợi 1.5s để hiển thị loading trên nút submit
-        await new Promise(resolve => setTimeout(resolve, 1500));
+            // Gọi API gửi OTP
+            await authApi.sendOtp(response.result.email);
 
-        // Chuyển hướng sang trang OTP
-        navigate('/otp', {
-          state: {
-            email: response.result.email,
-            message: "Please check your email for verification code"
+            // Đợi 1.5s để hiển thị loading
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Chuyển hướng sang trang OTP
+            navigate('/otp', {
+              state: {
+                email: response.result.email,
+                message: "Please check your email for verification code"
+              }
+            });
+
+            return response;
           }
-        });
-      } else {
-        // Log lỗi nếu response không thành công hoặc không valid
-        console.warn("Register not valid:", response);
-      }
+
+          // Nếu không thành công, không throw error mà return response để toast.promise có thể hiển thị
+          return response;
+        },
+        {
+          loading: 'Creating your account...',
+          success: 'Account created successfully! Check your email for verification.',
+          error: (err: Error) => err.message || 'An error occurred during registration.'
+        }
+      );
     } catch (error) {
-      // Error đã được xử lý ở interceptor
-      console.error("Register error:", error);
+      console.error("Registration error:", error);
+      throw error; // Re-throw để react-hook-form có thể xử lý lỗi
     }
   }
   return (
@@ -148,31 +199,54 @@ export function SignUpForm({
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="password" className="text-sm">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...register("password")}
-                    aria-invalid={!!errors.password}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={isVisible ? "text" : "password"}
+                      {...register("password")}
+                      aria-invalid={!!errors.password}
+                      className="pe-9"
+                      autoComplete="new-password"
+                    />
+                  </div>
                   {errors.password && (
-                    <p className="text-xs text-destructive">{errors.password.message}</p>
+                    <p className="text-xs text-destructive flex flex-wrap gap-2">{errors.password.message}</p>
                   )}
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword" className="text-sm">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    {...register("confirmPassword")}
-                    aria-invalid={!!errors.confirmPassword}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-                  )}
+
+                  <div className="mb-2 flex h-1 w-full gap-1">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <span
+                        key={index}
+                        className={cn(
+                          "h-full flex-1 rounded-full transition-all duration-500 ease-out",
+                          index < strengthScore ? getColor(strengthScore) : "bg-border"
+                        )}
+                      />
+                    ))}
+                  </div>
+
+                  <p className="text-foreground text-sm font-medium">{getText(strengthScore)}. Must contain:</p>
+
+                  <ul className="space-y-1.5">
+                    {strength.map((req, index) => (
+                      <li key={index} className="flex items-center gap-2">
+                        {req.met ? (
+                          <CheckIcon className="size-4 text-green-600 dark:text-green-400" />
+                        ) : (
+                          <XIcon className="text-muted-foreground size-4" />
+                        )}
+                        <span className={cn("text-xs", req.met ? "text-green-600 dark:text-green-400" : "text-muted-foreground")}>
+                          {req.text}
+                          <span className="sr-only">{req.met ? " - Requirement met" : " - Requirement not met"}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
                 <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
                   {isSubmitting ? "Creating account..." : "Create account"}
                 </Button>
+
               </div>
               <div className="text-center text-xs">
                 Already have an account?{" "}
