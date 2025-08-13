@@ -3,7 +3,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/shared/components/ui/dialog"
+} from "@/shared/components/ProfileUser"
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
 import { Button } from "@/shared/components/ui/button"
 import { useState } from "react"

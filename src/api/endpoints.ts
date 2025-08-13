@@ -6,6 +6,12 @@ export const API_ENDPOINTS = {
     VERIFYSOTP: 'api/otp/verify',
     LOGOUT: '/auth/logout',
   },
+  USER: {
+    PROFILE: '/user/profile',
+    UPDATE_PROFILE: '/user/update-profile',
+    CHANGE_PASSWORD: '/user/change-password',
+    UPLOAD_AVATAR: '/user/upload-avatar',
+  },
   MESSAGES: {
     LIST: '/messages',
     SEND: '/messages/send',

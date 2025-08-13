@@ -64,12 +64,20 @@ export function SidebarFooter() {
         },
         {
           loading: 'Logging out...',
-          success: 'Logged out successfully',
+          success: () => {
+            toast.success('Logged out successfully', {
+              style: {
+                '--normal-bg': 'var(--background)',
+                '--normal-text': 'light-dark(var(--color-green-600), var(--color-green-400))',
+                '--normal-border': 'light-dark(var(--color-green-600), var(--color-green-400))'
+              } as React.CSSProperties
+            });
+            return 'Logout completed';
+          },
           error: 'Failed to logout'
         }
       )
-    } catch (error) {
-      console.error('Logout error:', error)
+    } catch {
       toast.error('Failed to logout')
     } finally {
       setIsLoading(false)

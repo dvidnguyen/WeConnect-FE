@@ -63,20 +63,56 @@ export function LoginForm({
           username: response.result.username
         }));
 
-        toast.success('Login successful!')        // Đợi 1.2s để hiển thị toast và loading state
+        toast.success('Log in successfully', {
+          style: {
+            '--normal-bg': 'var(--background)',
+            '--normal-text': 'light-dark(var(--color-green-600), var(--color-green-400))',
+            '--normal-border': 'light-dark(var(--color-green-600), var(--color-green-400))'
+          } as React.CSSProperties
+        })
+        // Đợi 1.2s để hiển thị toast và loading state
         await new Promise(resolve => setTimeout(resolve, 1200))
 
         // Redirect tới trang messages
         navigate('/messages')
       } else {
-        toast.error(response.message || 'Login failed')
+        toast.error('Login failed')
       }
     } catch (error: unknown) {
       console.error("Login error:", error)
 
-      // Hiển thị error message từ server hoặc generic message
-      const errorMessage = error instanceof Error ? error.message : 'Login failed. Please try again.'
-      toast.error(errorMessage)
+      // Xử lý error response từ API
+      let errorMessage = 'Login failed. Please try again.'
+
+      // Type guard cho axios error
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { code?: number; message?: string } } }
+
+        if (axiosError.response?.data) {
+          const { code, message } = axiosError.response.data
+
+          switch (code) {
+            case 404:
+              errorMessage = 'Email does not exist. Please check your email or sign up.'
+              break
+            case 401:
+              errorMessage = 'Invalid email or password. Please try again.'
+              break
+            default:
+              errorMessage = message || 'Login failed. Please try again.'
+          }
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      toast.error(errorMessage, {
+        style: {
+          '--normal-bg': 'var(--background)',
+          '--normal-text': 'var(--destructive)',
+          '--normal-border': 'var(--destructive)'
+        } as React.CSSProperties
+      })
     }
   }
 
