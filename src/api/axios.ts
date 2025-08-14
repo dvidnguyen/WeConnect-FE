@@ -22,6 +22,8 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log('❌ [Frontend] No token in localStorage');
     }
 
     // Trả về config đã chỉnh sửa
@@ -39,12 +41,6 @@ api.interceptors.response.use(
   (response) => {
     // Tắt loading indicator
     interceptorLoading(false);
-
-    // Hiển thị message success nếu có
-    if (response.data?.message) {
-      toast.success(response.data.message);
-    }
-    // Return response.data cho các API call
     return response;
   },
   (error) => {

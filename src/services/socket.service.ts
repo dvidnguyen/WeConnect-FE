@@ -35,7 +35,7 @@ class SocketService {
   connect(token: string) {
     if (this.socket?.connected) {
       alert('Socket already connected line 37');
-      return;
+      return; 
     }
 
     // Kết nối với server với token
@@ -56,8 +56,8 @@ class SocketService {
 
     // Connection events
     this.socket.on('connect', () => {
-      alert('✅ Socket connected successfully');
-      console.log('Socket ID:', this.socket?.id);
+      // alert('✅ Socket connected successfully');
+      // console.log('Socket ID:', this.socket?.id);
     });
 
     this.socket.on('connected', (data: unknown) => {

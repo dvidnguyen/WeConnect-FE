@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar"
 import { BadgeCheckIcon } from 'lucide-react'
-import { useAppSelector } from "@/app/store/hooks"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,34 +10,90 @@ import {
 } from "@/shared/components/ui/dropdown-menu"
 import { Button } from "@/shared/components/ui/button"
 import { LogOut, Settings, User } from "lucide-react"
-import { useState } from "react"
-import { UserProfileDialog } from "../profile/user-profile-dialog"
+import { useState, useEffect } from "react"
+import { UserProfileDialog } from "../../../features/user/components/user-profile-dialog"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { authApi } from "@/api/auth.api"
+import { userApi } from "@/api/user.api"
+import type { UserProfile } from "@/api/user.api"
 import { useAppDispatch } from "@/app/store/hooks"
 import { logout } from "@/features/auth/slices/auth.slice"
 
 export function SidebarFooter() {
   const [showProfile, setShowProfile] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
+  const [profileData, setProfileData] = useState<UserProfile | null>(null)
+  const [currentProfile, setCurrentProfile] = useState<UserProfile | null>(null)
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const { email, username } = useAppSelector(state => state.auth);
+
+  // Fetch profile data on component mount
+  useEffect(() => {
+    fetchCurrentProfile()
+  }, [])
+
+  const fetchCurrentProfile = async () => {
+    try {
+      const response = await userApi.getProfile()
+      if (response.code === 200 && response.result) {
+        setCurrentProfile(response.result)
+      }
+    } catch (error) {
+      console.error('Failed to fetch current profile:', error)
+      // Don't show error toast here, just silently fail
+    }
+  }
+
+  const handleProfileUpdate = (updatedProfile: UserProfile) => {
+    // Cập nhật currentProfile khi user edit profile thành công
+    setCurrentProfile(updatedProfile)
+  }
+
+  const handleProfileClick = async () => {
+    try {
+      setIsLoadingProfile(true)
+
+      // Debug token comparison với Postman
+
+      // Gọi API profile ngay khi click
+      const response = await userApi.getProfile();
+      console.log('Profile API Response:', response); // Debug log
+
+      await toast.promise(
+        Promise.resolve(response),
+        {
+          loading: 'Đang tải thông tin profile...',
+          success: (response) => {
+            if (response.code === 200 && response.result) {
+              // Lưu profile data và mở dialog
+              setProfileData(response.result)
+              setShowProfile(true)
+              return 'Đã tải thông tin profile thành công!'
+            } else if (response.code === 401 || response.code === 402) {
+              throw new Error(response.message || 'Bạn cần đăng nhập lại')
+            } else {
+              throw new Error(`Lỗi: ${response.message || 'Không thể tải thông tin profile'}`)
+            }
+          },
+          error: 'Lỗi khi tải thông tin profile'
+        }
+      )
+    } catch {
+      // Nếu có lỗi, vẫn mở dialog để user thấy thông báo lỗi
+      setProfileData(null)
+      setShowProfile(true)
+    } finally {
+      setIsLoadingProfile(false)
+    }
+  }
 
   const getAvatarLetters = (username: string | null): string => {
-    if (!username) return 'U';
+    if (!username) return 'W';
 
-    // Tách username thành các từ
-    const words = username.split(/[-_\s+]/).filter(word => word.length > 0);
-
-    if (words.length >= 2) {
-      // Nếu có 2 từ trở lên, lấy chữ cái đầu của 2 từ đầu tiên
-      return (words[0][0] + words[1][0]).toUpperCase();
-    } else {
-      // Nếu chỉ có 1 từ, lấy 2 chữ cái đầu của từ đó
-      return username.slice(0, 2).toUpperCase();
-    }
+    // Lấy ký tự đầu tiên của username và chuyển thành chữ hoa
+    return username.charAt(0).toUpperCase();
   };
   const handleLogout = async () => {
     try {
@@ -91,7 +146,7 @@ export function SidebarFooter() {
           <Button variant="ghost" className="w-full justify-start gap-2">
             <div className="relative">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className='text-xs'>{getAvatarLetters(username)}</AvatarFallback>
+                <AvatarFallback className='text-xs'>{getAvatarLetters(currentProfile?.username || null)}</AvatarFallback>
               </Avatar>
               <span className='absolute -end-1.5 -top-1.5'>
                 <span className='sr-only'>Verified</span>
@@ -99,17 +154,17 @@ export function SidebarFooter() {
               </span>
             </div>
             <div className="flex flex-col items-start text-sm">
-              <span className="font-medium">{username || 'Unknown'}</span>
-              <span className="text-xs text-gray-500">{email || 'm@example.com'}</span>
+              <span className="font-medium">{currentProfile?.username || 'Loading...'}</span>
+              <span className="text-xs text-gray-500">{currentProfile?.email || 'Loading...'}</span>
             </div>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" side="top">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => setShowProfile(true)}>
+          <DropdownMenuItem onSelect={handleProfileClick} disabled={isLoadingProfile}>
             <User className="mr-2 h-4 w-4" />
-            Profile
+            {isLoadingProfile ? 'Đang tải...' : 'Profile'}
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />
@@ -122,7 +177,12 @@ export function SidebarFooter() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <UserProfileDialog open={showProfile} onOpenChange={setShowProfile} />
+      <UserProfileDialog
+        open={showProfile}
+        onOpenChange={setShowProfile}
+        profileData={profileData}
+        onProfileUpdate={handleProfileUpdate}
+      />
     </div>
   )
 }

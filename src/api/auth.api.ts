@@ -63,6 +63,8 @@ export const authApi = {
   register: async (payload: RegisterPayload): Promise<RegisterResponse> => {
     try {
       const response = await api.post(API_ENDPOINTS.AUTH.REGISTER, payload);
+
+
       return response.data;
     } catch (error) {
       console.error("Register API error:", error);
@@ -71,8 +73,19 @@ export const authApi = {
   },
 
   sendOtp: async (email: string): Promise<ApiResponse> => {
-    const response = await api.post(API_ENDPOINTS.AUTH.VERIFYSEND, { email })
-    return response.data
+    try {
+     
+
+      const response = await api.post(API_ENDPOINTS.AUTH.VERIFYSEND, { email }, {
+        timeout: 30000 // Tăng timeout lên 30s cho việc gửi email
+      });
+
+     
+      return response.data;
+    } catch (error) {
+      console.error('❌ Send OTP error:', error);
+      throw error;
+    }
   },
 
   verifyOtp: async (payload: VerifyOtpPayload): Promise<VerifyOtpResponse> => {

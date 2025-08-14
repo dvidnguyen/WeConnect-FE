@@ -54,8 +54,16 @@ export function LoginForm({
       if (response?.code === 200 && response?.result) {
         const { token } = response.result;
 
+        // Debug: Log token trước khi lưu
+        console.log('🎫 Token received from login:', token);
+        console.log('🎫 Token type:', typeof token);
+        console.log('🎫 Token length:', token?.length);
+
         // Lưu token vào localStorage
         localStorage.setItem('token', token);
+
+        // Debug: Verify token đã lưu
+        console.log('✅ Token saved to localStorage:', localStorage.getItem('token'));
 
         // Chỉ lưu email và username vào Redux store
         dispatch(setUser({

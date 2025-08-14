@@ -3,8 +3,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/shared/components/ui/button"
 import { useAppDispatch } from "@/app/store/hooks"
+import { setTempEmail } from "../slices/auth.slice"
 import { toast } from "sonner"
-import { useId, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { CheckIcon, XIcon } from 'lucide-react'
 import {
   Card,
@@ -25,7 +26,7 @@ const requirements = [
   { regex: /[A-Z]/, text: 'At least 1 uppercase letter' },
   { regex: /[0-9]/, text: 'At least 1 number' },
   {
-    regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/,
+    regex: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
     text: 'At least 1 special character'
   }
 ]
@@ -37,7 +38,7 @@ const signUpSchema = z.object({
     .regex(/[a-z]/, "Password must contain at least 1 lowercase letter")
     .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
     .regex(/[0-9]/, "Password must contain at least 1 number")
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/, "Password must contain at least 1 special character")
+    .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, "Password must contain at least 1 special character")
 })
 
 type SignUpFormData = z.infer<typeof signUpSchema>
@@ -48,9 +49,6 @@ export function SignUpForm({
 }: React.ComponentProps<"div">) {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const [isVisible, setIsVisible] = useState(false)
-  const [password, setPassword] = useState('')
-  const id = useId()
 
   const {
     register,
@@ -90,57 +88,52 @@ export function SignUpForm({
   }
 
   const onSubmit = async (data: SignUpFormData) => {
-    try {
-      await toast.promise(
-        async () => {
-          // Chuẩn bị payload cho form api yêu cầu 
-          const registerPayload = {
-            username: data.fullName,
-            password: data.password,
-            email: data.email
-          };
+    await toast.promise(
+      async () => {
+        // Chuẩn bị payload cho form api yêu cầu 
+        const registerPayload = {
+          username: data.fullName,
+          password: data.password,
+          email: data.email
+        };
+        // Gọi API đăng ký và chờ response
+        const response = await authApi.register(registerPayload);
+        // Nếu đăng ký thành công và valid = true
+        if (response?.code === 200 && response?.result?.valid === true) {
 
-          // Gọi API đăng ký và chờ response
-          const response = await authApi.register(registerPayload);
+          // Lưu email vào Redux store để dùng ở CodeOtpForm
+          dispatch(setTempEmail(response.result.email));
 
-          console.log('Register response:', response);
-
-          // Nếu đăng ký thành công và valid = true
-          if (response?.code === 200 && response?.result?.valid === true) {
-            // Dispatch response vào Redux store
-            dispatch(setRegisterResponse(response));
-
-            // Gọi API gửi OTP
+          // Gọi API gửi OTP
+          try {
             await authApi.sendOtp(response.result.email);
-
-            // Đợi 1.5s để hiển thị loading
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // Chuyển hướng sang trang OTP
-            navigate('/otp', {
-              state: {
-                email: response.result.email,
-                message: "Please check your email for verification code"
-              }
-            });
-
-            return response;
+          } catch {
+            // Continue with navigation even if OTP fails for testing
           }
+          // Đợi 1.5s để hiển thị loading
+          await new Promise(resolve => setTimeout(resolve, 1200));
 
-          // Nếu không thành công, không throw error mà return response để toast.promise có thể hiển thị
+          // Chuyển hướng sang trang OTP
+          navigate('/otp', {
+            state: {
+              email: response.result.email,
+              message: "Please check your email for verification code"
+            }
+          });
+
           return response;
-        },
-        {
-          loading: 'Creating your account...',
-          success: 'Account created successfully! Check your email for verification.',
-          error: (err: Error) => err.message || 'An error occurred during registration.'
         }
-      );
-    } catch (error) {
-      console.error("Registration error:", error);
-      throw error; // Re-throw để react-hook-form có thể xử lý lỗi
-    }
-  }
+
+        // Nếu không thành công, không throw error mà return response để toast.promise có thể hiển thị
+        return response;
+      },
+      {
+        loading: 'Creating your account...',
+        success: 'Account created successfully! Check your email for verification.',
+        error: (err: Error) => err.message || 'An error occurred during registration.'
+      }
+    );
+  };
   return (
     <div className={cn("flex flex-col gap-4", className)} {...props}>
       <Card>
@@ -202,7 +195,7 @@ export function SignUpForm({
                   <div className="relative">
                     <Input
                       id="password"
-                      type={isVisible ? "text" : "password"}
+                      type="password"
                       {...register("password")}
                       aria-invalid={!!errors.password}
                       className="pe-9"
