@@ -2,6 +2,7 @@ import { Button } from '@/shared/components/ui/button';
 import { useEffect } from 'react';
 import { useFriendRequest } from '@/features/friends/hooks/useFriendRequest';
 import { LoaderCircleIcon } from 'lucide-react';
+import { type FriendRequest } from '@/api/friend.api';
 
 const FriendRequestPage = () => {
   const { loading, friendRequests, getFriendRequests, acceptFriendRequest, rejectFriendRequest } = useFriendRequest();
@@ -12,16 +13,18 @@ const FriendRequestPage = () => {
   }, [getFriendRequests]);
 
   const handleAccept = async (requestId: string) => {
-    const result = await acceptFriendRequest(requestId);
-    if (!result.success) {
-      console.error('Failed to accept friend request:', result.message);
+    try {
+      await acceptFriendRequest(requestId);
+    } catch (error) {
+      console.error('Failed to accept friend request:', error);
     }
   };
 
   const handleReject = async (requestId: string) => {
-    const result = await rejectFriendRequest(requestId);
-    if (!result.success) {
-      console.error('Failed to reject friend request:', result.message);
+    try {
+      await rejectFriendRequest(requestId);
+    } catch (error) {
+      console.error('Failed to reject friend request:', error);
     }
   };
 
@@ -32,7 +35,7 @@ const FriendRequestPage = () => {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center ml-3">
             <span>Lời mời đã nhận</span>
             <span className="ml-2 text-blue-500 dark:text-blue-400">({friendRequests.length})</span>
-            
+
           </h1>
         </div>
 
@@ -58,7 +61,7 @@ const FriendRequestPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 dark:hover:scrollbar-thumb-gray-500 scrollbar-track-transparent">
-            {friendRequests.map((request, index) => (
+            {friendRequests.map((request: FriendRequest, index: number) => (
               <div
                 key={request.id}
                 className="bg-white dark:bg-[#23232a] rounded-lg shadow-sm border dark:border-gray-700 p-4 w-full transform transition-all duration-500 hover:shadow-lg hover:-translate-y-1 animate-fadeSlideUp"
@@ -66,7 +69,7 @@ const FriendRequestPage = () => {
               >
                 <div className="flex items-center gap-3 mb-3">
                   <img
-                    src={request.from?.avatar || 'https://via.placeholder.com/48'}
+                    src={request.from?.avatar || `https://api.dicebear.com/7.x/thumbs/svg?seed=${request.from?.username}`}
                     alt={request.from?.username || 'User'}
                     className="w-12 h-12 rounded-full object-cover border dark:border-gray-700 transform transition-all duration-500 hover:scale-110 flex-shrink-0"
                   />
@@ -77,7 +80,7 @@ const FriendRequestPage = () => {
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <span>{new Date(request.createdAt).toLocaleDateString('vi-VN')}</span>
                       <span>-</span>
-                      <span className="truncate">{request.from?.email || 'Email không xác định'}</span>
+                      <span className="truncate">{request.from?.userId || 'ID không xác định'}</span>
                     </div>
                   </div>
                   <div className="w-6 h-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer flex-shrink-0">

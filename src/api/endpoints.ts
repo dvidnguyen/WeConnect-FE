@@ -14,6 +14,12 @@ export const API_ENDPOINTS = {
     CHANGE_PASSWORD: '/user/change-password',
     UPLOAD_AVATAR: '/user/upload-avatar',
   },
+  CONTACT: {
+    LIST: '/contact/',
+    BLOCK: (id: string) => `/contact/block/${id}`,
+    UNBLOCK: (id: string) => `/contact/unblock/${id}`,
+    CANCEL: (id: string) => `/contact/cancel/${id}`,
+  },
   CONSERVATION: {
     LIST: '/conservation',
     CREATE: '/conservation/create',
