@@ -17,20 +17,20 @@ export default function SignUpPage() {
       </div>
 
       {/* Mode Toggle */}
-      <div className="absolute right-2 top-2 sm:right-4 sm:top-4 md:right-8 md:top-8 z-50">
+      <div className="absolute right-1 top-1 sm:right-2 sm:top-2 md:right-4 md:top-4 z-50">
         <ModeToggle />
       </div>
 
       {/* Main Content */}
-      <div className="relative flex h-full items-center justify-center p-4 z-10">
-        <div className="w-[90%] md:w-[85%] lg:w-[75%] max-w-3xl mx-auto backdrop-blur-md bg-background/30 rounded-xl shadow-2xl p-4 md:p-8 max-h-[95vh] overflow-y-auto space-y-8">
-          {/* Logo */}
-          <div className="text-center">
-            <a href="#" className="inline-flex items-center gap-3 rounded-lg px-4 py-2 font-medium">
-              <div className="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-md">
-                <ChartNetwork className="size-8" />
+      <div className="relative flex h-full items-center justify-center p-1 sm:p-2 md:p-4 z-10">
+        <div className="w-full max-w-sm sm:max-w-md backdrop-blur-md bg-background/30 rounded-xl shadow-2xl p-2 sm:p-4 md:p-6 max-h-[98vh] overflow-y-auto">
+          {/* Logo - Compact on mobile */}
+          <div className="text-center mb-2 sm:mb-4">
+            <a href="#" className="inline-flex items-center gap-2 sm:gap-3 rounded-lg px-2 sm:px-4 py-1 sm:py-2 font-medium">
+              <div className="bg-primary text-primary-foreground flex size-8 sm:size-10 md:size-12 items-center justify-center rounded-md">
+                <ChartNetwork className="size-5 sm:size-6 md:size-8" />
               </div>
-              <span className="text-3xl font-bold">WeConnect</span>
+              <span className="text-lg sm:text-2xl md:text-3xl font-bold">WeConnect</span>
             </a>
           </div>
           <SignUpForm />

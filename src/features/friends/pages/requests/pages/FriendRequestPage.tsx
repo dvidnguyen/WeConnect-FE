@@ -1,55 +1,28 @@
 import { Button } from '@/shared/components/ui/button';
-import { useState } from 'react';
-
-const friendRequests = [
-  {
-    id: 1,
-    name: 'Nhật Trường',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    message: 'Xin chào, mình là Nhật Trường. Kết bạn với mình nhé!',
-    source: 'Từ số điện thoại',
-    date: '30/07'
-  },
-  {
-    id: 2,
-    name: 'Nhật Trường',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    message: 'Xin chào, mình là Nhật Trường. Kết bạn với mình nhé!',
-    source: 'Từ số điện thoại',
-    date: '30/07'
-  },
-  {
-    id: 3,
-    name: 'Nhật Trường',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    message: 'Xin chào, mình là Nhật Trường. Kết bạn với mình nhé!',
-    source: 'Từ số điện thoại',
-    date: '30/07'
-  },
-  {
-    id: 4,
-    name: 'Nhật Trường',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    message: 'Xin chào, mình là Nhật Trường. Kết bạn với mình nhé!',
-    source: 'Từ số điện thoại',
-    date: '30/07'
-  },
-  
-
-
-];
+import { useEffect } from 'react';
+import { useFriendRequest } from '@/features/friends/hooks/useFriendRequest';
+import { LoaderCircleIcon } from 'lucide-react';
 
 const FriendRequestPage = () => {
-  const [requests, setRequests] = useState(friendRequests);
+  const { loading, friendRequests, getFriendRequests, acceptFriendRequest, rejectFriendRequest } = useFriendRequest();
 
-  const handleAccept = (id: number) => {
-    setRequests(requests.filter(req => req.id !== id));
-    // TODO: Implement accept logic
+  // Load friend requests when component mounts
+  useEffect(() => {
+    getFriendRequests();
+  }, [getFriendRequests]);
+
+  const handleAccept = async (requestId: string) => {
+    const result = await acceptFriendRequest(requestId);
+    if (!result.success) {
+      console.error('Failed to accept friend request:', result.message);
+    }
   };
 
-  const handleReject = (id: number) => {
-    setRequests(requests.filter(req => req.id !== id));
-    // TODO: Implement reject logic
+  const handleReject = async (requestId: string) => {
+    const result = await rejectFriendRequest(requestId);
+    if (!result.success) {
+      console.error('Failed to reject friend request:', result.message);
+    }
   };
 
   return (
@@ -58,11 +31,17 @@ const FriendRequestPage = () => {
         <div className="sticky top-0 z-10 pb-6 pt-2">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center ml-3">
             <span>Lời mời đã nhận</span>
-            <span className="ml-2 text-blue-500 dark:text-blue-400">({requests.length})</span>
+            <span className="ml-2 text-blue-500 dark:text-blue-400">({friendRequests.length})</span>
+            
           </h1>
         </div>
 
-        {requests.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <LoaderCircleIcon className="size-8 animate-spin text-blue-500 mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">Đang tải lời mời kết bạn...</p>
+          </div>
+        ) : friendRequests.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 animate-fadeIn">
             <div className="w-24 h-24 mb-6 text-gray-300 dark:text-gray-600 animate-float">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -79,24 +58,26 @@ const FriendRequestPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 dark:hover:scrollbar-thumb-gray-500 scrollbar-track-transparent">
-            {requests.map(request => (
+            {friendRequests.map((request, index) => (
               <div
                 key={request.id}
                 className="bg-white dark:bg-[#23232a] rounded-lg shadow-sm border dark:border-gray-700 p-4 w-full transform transition-all duration-500 hover:shadow-lg hover:-translate-y-1 animate-fadeSlideUp"
-                style={{ animationDelay: `${request.id * 100}ms` }}
+                style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <img
-                    src={request.avatar}
-                    alt={request.name}
+                    src={request.from?.avatar || 'https://via.placeholder.com/48'}
+                    alt={request.from?.username || 'User'}
                     className="w-12 h-12 rounded-full object-cover border dark:border-gray-700 transform transition-all duration-500 hover:scale-110 flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{request.name}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                      {request.from?.username || 'Unknown User'}
+                    </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <span>{request.date}</span>
+                      <span>{new Date(request.createdAt).toLocaleDateString('vi-VN')}</span>
                       <span>-</span>
-                      <span className="truncate">{request.source}</span>
+                      <span className="truncate">{request.from?.email || 'Email không xác định'}</span>
                     </div>
                   </div>
                   <div className="w-6 h-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer flex-shrink-0">
@@ -108,7 +89,7 @@ const FriendRequestPage = () => {
 
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-2 rounded text-left line-clamp-2 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    {request.message}
+                    {request.body || 'Xin chào! Hãy kết bạn với tôi nhé!'}
                   </p>
                 </div>
 

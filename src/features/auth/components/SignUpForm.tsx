@@ -5,7 +5,7 @@ import { Button } from "@/shared/components/ui/button"
 import { useAppDispatch } from "@/app/store/hooks"
 import { setTempEmail } from "../slices/auth.slice"
 import { toast } from "sonner"
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { CheckIcon, XIcon } from 'lucide-react'
 import {
   Card,
@@ -49,6 +49,7 @@ export function SignUpForm({
 }: React.ComponentProps<"div">) {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const [showRequirements, setShowRequirements] = useState(false)
 
   const {
     register,
@@ -135,21 +136,20 @@ export function SignUpForm({
     );
   };
   return (
-    <div className={cn("flex flex-col gap-4", className)} {...props}>
-      <Card>
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-lg">Create an account</CardTitle>
-          <CardDescription>
+    <div className={cn("flex flex-col gap-1 sm:gap-4 w-full max-w-sm mx-auto px-2 sm:px-0", className)} {...props}>
+      <Card className="w-full">
+        <CardHeader className="text-center space-y-0.5 sm:space-y-2 px-2 sm:px-6 pt-2 sm:pt-6 pb-1 sm:pb-6">
+          <CardTitle className="text-sm sm:text-lg">Create an account</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Sign up with your Google account
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 sm:px-6 pb-2 sm:pb-6">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid gap-4">
-              <div className="flex flex-col gap-3">
-
-                <Button variant="outline" className="w-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <div className="grid gap-1 sm:gap-4">
+              <div className="flex flex-col gap-1 sm:gap-3">
+                <Button variant="outline" className="w-full h-7 sm:h-10 text-xs sm:text-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3 h-3 sm:w-5 sm:h-5">
                     <path
                       d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
                       fill="currentColor"
@@ -163,13 +163,14 @@ export function SignUpForm({
                   Or continue with
                 </span>
               </div>
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="fullName" className="text-sm">Full Name</Label>
+              <div className="grid gap-1 sm:gap-4">
+                <div className="grid gap-0.5 sm:gap-2">
+                  <Label htmlFor="fullName" className="text-xs sm:text-sm">Full Name</Label>
                   <Input
                     id="fullName"
                     type="text"
                     placeholder="John Doe"
+                    className="h-7 sm:h-10 text-xs sm:text-sm"
                     {...register("fullName")}
                     aria-invalid={!!errors.fullName}
                   />
@@ -177,12 +178,13 @@ export function SignUpForm({
                     <p className="text-xs text-destructive">{errors.fullName.message}</p>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email" className="text-sm">Email</Label>
+                <div className="grid gap-0.5 sm:gap-2">
+                  <Label htmlFor="email" className="text-xs sm:text-sm">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="m@example.com"
+                    className="h-7 sm:h-10 text-xs sm:text-sm"
                     {...register("email")}
                     aria-invalid={!!errors.email}
                   />
@@ -190,23 +192,25 @@ export function SignUpForm({
                     <p className="text-xs text-destructive">{errors.email.message}</p>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password" className="text-sm">Password</Label>
+                <div className="grid gap-0.5 sm:gap-2">
+                  <Label htmlFor="password" className="text-xs sm:text-sm">Password</Label>
                   <div className="relative">
                     <Input
                       id="password"
                       type="password"
+                      className="pe-9 h-7 sm:h-10 text-xs sm:text-sm"
                       {...register("password")}
                       aria-invalid={!!errors.password}
-                      className="pe-9"
                       autoComplete="new-password"
+                      onFocus={() => setShowRequirements(true)}
+                      onBlur={() => setShowRequirements(false)}
                     />
                   </div>
                   {errors.password && (
                     <p className="text-xs text-destructive flex flex-wrap gap-2">{errors.password.message}</p>
                   )}
 
-                  <div className="mb-2 flex h-1 w-full gap-1">
+                  <div className="flex h-0.5 sm:h-1 w-full gap-0.5 sm:gap-1">
                     {Array.from({ length: 5 }).map((_, index) => (
                       <span
                         key={index}
@@ -218,25 +222,28 @@ export function SignUpForm({
                     ))}
                   </div>
 
-                  <p className="text-foreground text-sm font-medium">{getText(strengthScore)}. Must contain:</p>
-
-                  <ul className="space-y-1.5">
-                    {strength.map((req, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        {req.met ? (
-                          <CheckIcon className="size-4 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <XIcon className="text-muted-foreground size-4" />
-                        )}
-                        <span className={cn("text-xs", req.met ? "text-green-600 dark:text-green-400" : "text-muted-foreground")}>
-                          {req.text}
-                          <span className="sr-only">{req.met ? " - Requirement met" : " - Requirement not met"}</span>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  {(showRequirements || currentPassword) && (
+                    <>
+                      <p className="text-foreground text-xs sm:text-sm font-medium">{getText(strengthScore)}</p>
+                      <ul className="space-y-0 sm:space-y-0.5 grid grid-cols-1 sm:grid-cols-2 gap-x-2">
+                        {strength.map((req, index) => (
+                          <li key={index} className="flex items-center gap-1">
+                            {req.met ? (
+                              <CheckIcon className="size-2.5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                            ) : (
+                              <XIcon className="text-muted-foreground size-2.5 flex-shrink-0" />
+                            )}
+                            <span className={cn("text-xs leading-none", req.met ? "text-green-600 dark:text-green-400" : "text-muted-foreground")}>
+                              {req.text}
+                              <span className="sr-only">{req.met ? " - Requirement met" : " - Requirement not met"}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
-                <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
+                <Button type="submit" className="w-full h-7 sm:h-10 mt-0.5 sm:mt-2 text-xs sm:text-sm" disabled={isSubmitting}>
                   {isSubmitting ? "Creating account..." : "Create account"}
                 </Button>
 
@@ -251,7 +258,7 @@ export function SignUpForm({
           </form>
         </CardContent>
       </Card>
-      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
+      <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4 px-2 sm:px-0">
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.
       </div>

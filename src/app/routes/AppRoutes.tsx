@@ -5,6 +5,7 @@ import MessagesPage from '@/features/messages/pages/MessagesPage';
 import HomePage from '@/shared/components/layout/HomePage';
 import MessageLayout from '@/features/messages/pages/MessageLayout';
 import CodeOtpForm from '@/features/auth/components/CodeOtpForm';
+import UserProfilePage from '@/features/user/pages/UserProfilePage';
 
 import FriendContactPage from '@/features/friends/pages/contacts/pages/FriendContactPage';
 import FriendRequestPage from '@/features/friends/pages/requests/pages/FriendRequestPage';
@@ -39,6 +40,9 @@ export const AppRoutes = () => {
           <Route path="/messages" element={<MessagesPage />} />
           {/* Các route messages khác */}
         </Route>
+
+        {/* User Profile Route */}
+        <Route path="/profile/:userId" element={<UserProfilePage />} />
       </Route>
 
 
@@ -56,7 +60,7 @@ export const AppRoutes = () => {
         {/* <Route path="/friends/contacts/:id" element={<FriendContactDetail />} />
         <Route path="/friends/contacts/new" element={<NewFriendRequest />} /> */}
       </Route>
-      
+
       <Route path='/otp' element={<CodeOtpForm />} />
       {/* Redirect root to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />

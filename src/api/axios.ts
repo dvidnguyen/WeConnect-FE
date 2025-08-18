@@ -54,6 +54,20 @@ api.interceptors.response.use(
       toast.error('An error occurred. Please try again.');
     }
 
+    if (error.response?.status === 401) {
+      // Handle 401 Unauthorized error - Token expired
+      toast.error('Please log in again');
+
+      // Clear token and redirect to login
+      localStorage.removeItem('token');
+      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; max-age=0; secure';
+
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+    }
+
     // Log lỗi cho debug
     if (error.response) {
       console.error('API Error:', error.response.data);

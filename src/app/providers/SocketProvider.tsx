@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { useAppSelector } from '@/app/store/hooks';
-import socketService from '@/services/socket.service';
+import { socketService } from '@/services/socket.service';
 
 interface SocketContextType {
   isConnected: boolean;

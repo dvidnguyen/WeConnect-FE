@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     SEARCH: (query: string) => `/api/users/search?q=${encodeURIComponent(query)}`,
     PROFILE: '/api/users/profile',
     EDIT_PROFILE: '/api/users/edit',
+    USER_PROFILE: (userId: string) => `/api/users/profile/${userId}`,
     CHANGE_PASSWORD: '/user/change-password',
     UPLOAD_AVATAR: '/user/upload-avatar',
   },
@@ -24,10 +25,10 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/messages/${id}`,
   },
   FRIENDS: {
-    LIST: '/friends',
-    REQUEST: '/friends/request',
-    ACCEPT: (id: string) => `/friends/accept/${id}`,
-    REJECT: (id: string) => `/friends/reject/${id}`,
+    LIST: '/friend-request',
+    SEND: '/friend-request/send',
+    ACCEPT: '/friend-request/accepted',
+    REJECT: '/friend-request/rejected',
   },
   NOTIFICATIONS: {
     LIST: '/notifications',

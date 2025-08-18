@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
-import { LoaderCircleIcon, SearchIcon, UserRoundSearch, UserPlus, UserCheck, X } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
+import { LoaderCircleIcon, SearchIcon, UserRoundSearch, X } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { useNavigate } from 'react-router-dom'
 import { userApi } from '@/api/user.api'
 import type { User } from '@/api/user.api'
+import { UserCard } from './UserCard'
+import { useFriendRequest } from '@/features/friends/hooks/useFriendRequest'
 
 const useDebounce = (value: string, delay: number = 750) => {
   const [debouncedValue, setDebouncedValue] = useState(value)
@@ -32,6 +33,9 @@ export const UserSearch = () => {
   const [showAll, setShowAll] = useState(false)
   const navigate = useNavigate()
   const searchRef = useRef<HTMLDivElement>(null)
+
+  // Friend request functionality
+  const { sendFriendRequest } = useFriendRequest()
 
   const displayedUsers = showAll ? users : users.slice(0, 5)
   const hasMore = users.length > 5
@@ -91,15 +95,57 @@ export const UserSearch = () => {
     setShowAll(false) // Reset show all when search changes
   }, [debouncedSearch])
 
-  const handleViewProfile = (userId: string) => {
-    navigate(`/profile/${userId}`)
-    setIsFocused(false) // Hide dropdown after navigation
+  const handleViewProfile = async (userId: string) => {
+    try {
+      console.log('Fetching profile for userId:', userId)
+
+      // Call API to get user profile
+      const response = await userApi.getUserProfile(userId)
+
+      if (response.code === 200 && response.result) {
+        console.log('User profile:', response.result)
+        // Navigate to profile page with user data
+        navigate(`/profile/${userId}`, { state: { profileData: response.result } })
+      } else {
+        console.error('Failed to fetch user profile:', response.message)
+        // Still navigate but without pre-loaded data
+        navigate(`/profile/${userId}`)
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      // Still navigate even if API fails
+      navigate(`/profile/${userId}`)
+    } finally {
+      setIsFocused(false) // Hide dropdown after navigation
+    }
   }
 
-  const handleSendFriendRequest = (userId: string) => {
-    // TODO: Implement friend request logic with socket
-    console.log('Sending friend request to:', userId)
-    // Don't hide dropdown for friend request to allow multiple actions
+  const handleSendFriendRequest = async (userId: string) => {
+    try {
+      console.log('🔄 Sending friend request to userId:', userId)
+
+      const result = await sendFriendRequest(userId, 'Xin chào! Hãy kết bạn với tôi nhé!')
+
+      if (result.success) {
+        // Update local user state to reflect friend request sent
+        setUsers(prevUsers =>
+          prevUsers.map(user =>
+            user.userId === userId
+              ? { ...user, isFriend: true } // or add a "requestSent" status if available
+              : user
+          )
+        )
+
+        console.log('✅ Friend request sent successfully to:', userId)
+      } else {
+        console.error('❌ Failed to send friend request:', result.message)
+        alert(`❌ Failed to send friend request: ${result.message}`)
+      }
+    } catch (error) {
+      console.error('❌ Error sending friend request:', error)
+      alert('❌ An error occurred while sending friend request')
+    }
+    // Don't hide dropdown to allow multiple actions
   }
 
   // Handle keyboard navigation
@@ -167,50 +213,12 @@ export const UserSearch = () => {
                   </li>
                 ) : displayedUsers.length > 0 ? (
                   displayedUsers.map((user) => (
-                    <li key={user.userId} className='flex items-center gap-3 p-2 rounded-md hover:bg-accent transition-colors cursor-pointer'>
-                      <Avatar className='size-8'>
-                        <AvatarImage src={user.avatarUrl} alt={user.username} />
-                        <AvatarFallback className='text-xs'>
-                          {user.username?.charAt(0)?.toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className='flex-1 min-w-0'>
-                        <div className='text-sm font-medium truncate'>{user.username}</div>
-                        <div className='text-xs text-muted-foreground truncate'>{user.email}</div>
-                        {user.phoneNumber && (
-                          <div className='text-xs text-muted-foreground truncate'>{user.phoneNumber}</div>
-                        )}
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewProfile(user.userId)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <UserRoundSearch className="h-4 w-4" />
-                        </Button>
-                        {user.isFriend ? (
-                          <Button
-                            variant='outline'
-                            className='h-7 px-3 py-1 text-xs'
-                            disabled
-                          >
-                            <UserCheck className="h-3 w-3 mr-1" />
-                            Friends
-                          </Button>
-                        ) : (
-                          <Button
-                            variant='outline'
-                            className='h-7 px-3 py-1 text-xs'
-                            onClick={() => handleSendFriendRequest(user.userId)}
-                          >
-                            <UserPlus className="h-3 w-3 mr-1" />
-                            Add
-                          </Button>
-                        )}
-                      </div>
-                    </li>
+                    <UserCard
+                      key={user.userId}
+                      user={user}
+                      onViewProfile={handleViewProfile}
+                      onSendFriendRequest={handleSendFriendRequest}
+                    />
                   ))
                 ) : inputValue.trim() && !isLoading ? (
                   <li className='py-8 text-center'>

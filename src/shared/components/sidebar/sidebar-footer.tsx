@@ -11,7 +11,7 @@ import {
 import { Button } from "@/shared/components/ui/button"
 import { LogOut, Settings, User } from "lucide-react"
 import { useState, useEffect } from "react"
-import { UserProfileDialog } from "../../../features/user/components/user-profile-dialog"
+import { UserProfileDialog } from "../../../features/user/components/UserProfile"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { authApi } from "@/api/auth.api"

@@ -1,41 +1,42 @@
 import { io } from 'socket.io-client';
 
-// Interface match với NotificationResponse từ BE
+// Interface match chính xác với NotificationResponse từ BE
 interface NotificationResponse {
   id: string;
   body: string;
-  title: string;
-  type: string;
+  title: string; // username của người gửi
+  type: string; // "FRIEND"
   isRead: boolean;
   senderId: string;
   senderName: string;
   senderAvatarUrl?: string;
-  relatedId?: string;
+  relatedId?: string; // friend.getId()
   createdAt: string; // LocalDateTime từ BE
 }
 
-interface FriendRequest {
+// Interface cho FriendRequest BE expects
+interface FriendRequestPayload {
   to: string;
   body?: string;
 }
 
-interface FriendReactionRequest {
+// Interface cho FriendReactionRequest BE expects
+interface FriendReactionPayload {
   id: string; // Friend request ID
-}
-
-interface FriendEventData {
-  // Có thể là NotificationResponse hoặc data khác
-  notification?: NotificationResponse;
-  [key: string]: unknown;
 }
 
 class SocketService {
   private socket: ReturnType<typeof io> | null = null;
 
+  // Callback handlers cho friend events
+  private friendRequestCallback?: (data: NotificationResponse) => void;
+  private friendAcceptedCallback?: (data: NotificationResponse) => void;
+  private friendRejectedCallback?: (data: NotificationResponse) => void;
+
   connect(token: string) {
     if (this.socket?.connected) {
       alert('Socket already connected line 37');
-      return; 
+      return;
     }
 
     // Kết nối với server với token
@@ -76,20 +77,44 @@ class SocketService {
       console.error('❌ Socket error:', error);
     });
 
-    // Friend-related events (match với BE)
-    this.socket.on('friend', (data: FriendEventData) => {
-      console.log('👤 Friend request received:', data);
-      // Đây là event khi nhận friend request
+    // Friend-related events (match với BE SendRequestFriendService)
+    this.socket.on('friend', (notificationData: NotificationResponse) => {
+      console.log('👤 Friend request received:', notificationData);
+      console.log('📋 Friend request details:', {
+        id: notificationData.id,
+        from: notificationData.senderName,
+        message: notificationData.body,
+        avatar: notificationData.senderAvatarUrl
+      });
+
+      // Call registered callback if exists
+      this.friendRequestCallback?.(notificationData);
     });
 
-    this.socket.on('friend-accepted', (data: FriendEventData) => {
-      console.log('✅ Friend request accepted:', data);
-      // Event khi friend request được accept
+    this.socket.on('friend-accepted', (notificationData: NotificationResponse) => {
+      console.log('✅ Friend request accepted:', notificationData);
+      console.log('📋 Accept details:', {
+        id: notificationData.id,
+        from: notificationData.senderName,
+        message: notificationData.body,
+        avatar: notificationData.senderAvatarUrl
+      });
+
+      // Call registered callback if exists
+      this.friendAcceptedCallback?.(notificationData);
     });
 
-    this.socket.on('friend-rejected', (data: FriendEventData) => {
-      console.log('❌ Friend request rejected:', data);
-      // Event khi friend request bị reject
+    this.socket.on('friend-rejected', (notificationData: NotificationResponse) => {
+      console.log('❌ Friend request rejected:', notificationData);
+      console.log('📋 Reject details:', {
+        id: notificationData.id,
+        from: notificationData.senderName,
+        message: notificationData.body,
+        avatar: notificationData.senderAvatarUrl
+      });
+
+      // Call registered callback if exists
+      this.friendRejectedCallback?.(notificationData);
     });
 
     // General notifications
@@ -98,26 +123,45 @@ class SocketService {
     });
   }
 
-  // Friend request methods (match với BE service)
+  // Methods để register callbacks cho friend events
+  onFriendRequest(callback: (data: NotificationResponse) => void) {
+    this.friendRequestCallback = callback;
+  }
+
+  onFriendAccepted(callback: (data: NotificationResponse) => void) {
+    this.friendAcceptedCallback = callback;
+  }
+
+  onFriendRejected(callback: (data: NotificationResponse) => void) {
+    this.friendRejectedCallback = callback;
+  }
+
+  // Friend request methods (match với BE endpoints)
   sendFriendRequest(userId: string, message?: string) {
-    // BE expects: FriendRequest { to: string, body?: string }
-    this.emit('send_friend_request', {
+    // BE SendRequestFriendService expects: FriendRequest { to: string, body?: string }
+    const payload: FriendRequestPayload = {
       to: userId,
-      body: message || 'Hi! Let\'s be friends!'
-    });
-    console.log(`📤 Sending friend request to user: ${userId}`);
+      body: message || 'Xin chào! Hãy kết bạn với tôi nhé!'
+    };
+
+    console.log('📤 Sending friend request payload:', payload);
+    this.emit('send_friend_request', payload);
   }
 
   acceptFriendRequest(requestId: string) {
-    // BE expects: FriendReactionRequest { id: string }
-    this.emit('accept_friend_request', { id: requestId });
-    console.log(`✅ Accepting friend request: ${requestId}`);
+    // BE SendRequestFriendService.acceptFriendRequest expects: FriendReactionRequest { id: string }
+    const payload: FriendReactionPayload = { id: requestId };
+
+    console.log('✅ Accepting friend request payload:', payload);
+    this.emit('accept_friend_request', payload);
   }
 
   rejectFriendRequest(requestId: string) {
-    // BE expects: FriendReactionRequest { id: string }
-    this.emit('reject_friend_request', { id: requestId });
-    console.log(`❌ Rejecting friend request: ${requestId}`);
+    // BE SendRequestFriendService.rejectFriendRequest expects: FriendReactionRequest { id: string }
+    const payload: FriendReactionPayload = { id: requestId };
+
+    console.log('❌ Rejecting friend request payload:', payload);
+    this.emit('reject_friend_request', payload);
   }
 
   // Generic socket methods
@@ -158,6 +202,5 @@ class SocketService {
   }
 }
 
-// Export singleton instance
+// FINAL CLEAN EXPORT
 export const socketService = new SocketService();
-export default socketService;

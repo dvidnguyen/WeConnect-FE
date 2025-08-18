@@ -31,6 +31,21 @@ export interface UserProfile {
   phone?: string | null;
 }
 
+export interface OtherUserProfile {
+  userId: string;
+  email: string;
+  username: string;
+  avatarUrl?: string;
+  friend: boolean;
+  blocked: boolean;
+}
+
+export interface OtherUserProfileResponse {
+  code: number;
+  message?: string;
+  result?: OtherUserProfile;
+}
+
 export interface UpdateProfileRequest {
   username: string;
   birthDate?: string | null;
@@ -90,6 +105,57 @@ export const userApi = {
       }
       // Các lỗi khác
       throw error;
+    }
+  },
+
+  // Get other user profile by userId
+  getUserProfile: async (userId: string): Promise<OtherUserProfileResponse> => {
+    try {
+      if (!userId.trim()) {
+        return {
+          code: 400,
+          message: 'User ID is required'
+        };
+      }
+
+      const response = await api.get<OtherUserProfileResponse>(
+        API_ENDPOINTS.USER.USER_PROFILE(userId)
+      );
+      return response.data;
+    } catch (error) {
+      // Handle specific error cases
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status: number; data?: { code?: number; message?: string } } };
+
+        if (axiosError.response?.data) {
+          const responseData = axiosError.response.data;
+          return {
+            code: responseData.code || axiosError.response.status || 500,
+            message: responseData.message || "Failed to get user profile"
+          };
+        }
+
+        // Handle HTTP status codes
+        if (axiosError.response?.status === 404) {
+          return {
+            code: 404,
+            message: "User not found"
+          };
+        }
+
+        if (axiosError.response?.status === 401) {
+          return {
+            code: 401,
+            message: "Unauthorized"
+          };
+        }
+      }
+
+      // Network or other errors
+      return {
+        code: 500,
+        message: "Network error occurred"
+      };
     }
   },
 
