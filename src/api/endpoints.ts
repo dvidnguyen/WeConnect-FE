@@ -20,15 +20,20 @@ export const API_ENDPOINTS = {
     UNBLOCK: (id: string) => `/contact/unblock/${id}`,
     CANCEL: (id: string) => `/contact/cancel/${id}`,
   },
-  CONSERVATION: {
-    LIST: '/conservation',
-    CREATE: '/conservation/create',
-    DELETE: (id: string) => `/conservation/${id}`,
+  CONVERSATIONS: {
+    CREATE: '/api/conversations/create',
+    LIST: `/api/conversations`,
+    GET_BY_ID: (id: string) => `/conversations/${id}`,
+    DELETE: (id: string) => `/conversations/${id}`,
+    GET_PER_CONSERVATION: (id: string, limit: number = 15, before?: string, after?: string) => {
+      let url = `/api/conversations/${id}/messages?limit=${limit}`;
+      if (before) url += `&before=${before}`;
+      if (after) url += `&after=${after}`;
+      return url;
+    },
   },
   MESSAGES: {
-    LIST: '/messages',
-    SEND: '/messages/send',
-    DELETE: (id: string) => `/messages/${id}`,
+    SEND: '/api/message',
   },
   FRIENDS: {
     LIST: '/friend-request',

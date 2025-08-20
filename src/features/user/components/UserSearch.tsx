@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { userApi } from '@/api/user.api'
 import type { User } from '@/api/user.api'
 import { UserCard } from './UserCard'
-import { useFriendRequest } from '@/features/friends/hooks/useFriendRequest'
+
 
 const useDebounce = (value: string, delay: number = 750) => {
   const [debouncedValue, setDebouncedValue] = useState(value)
@@ -33,9 +33,6 @@ export const UserSearch = () => {
   const [showAll, setShowAll] = useState(false)
   const navigate = useNavigate()
   const searchRef = useRef<HTMLDivElement>(null)
-
-  // Friend request functionality
-  const { sendFriendRequest } = useFriendRequest()
 
   const displayedUsers = showAll ? users : users.slice(0, 5)
   const hasMore = users.length > 5
@@ -80,11 +77,9 @@ export const UserSearch = () => {
         if (response.code === 200) {
           setUsers(response.result)
         } else {
-          console.error('Search failed:', response.message)
           setUsers([])
         }
-      } catch (error) {
-        console.error('Search error:', error)
+      } catch {
         setUsers([])
       } finally {
         setIsLoading(false)
@@ -97,55 +92,22 @@ export const UserSearch = () => {
 
   const handleViewProfile = async (userId: string) => {
     try {
-      console.log('Fetching profile for userId:', userId)
-
       // Call API to get user profile
       const response = await userApi.getUserProfile(userId)
 
       if (response.code === 200 && response.result) {
-        console.log('User profile:', response.result)
         // Navigate to profile page with user data
         navigate(`/profile/${userId}`, { state: { profileData: response.result } })
       } else {
-        console.error('Failed to fetch user profile:', response.message)
         // Still navigate but without pre-loaded data
         navigate(`/profile/${userId}`)
       }
-    } catch (error) {
-      console.error('Error fetching user profile:', error)
+    } catch {
       // Still navigate even if API fails
       navigate(`/profile/${userId}`)
     } finally {
       setIsFocused(false) // Hide dropdown after navigation
     }
-  }
-
-  const handleSendFriendRequest = async (userId: string) => {
-    try {
-      console.log('🔄 Sending friend request to userId:', userId)
-
-      const result = await sendFriendRequest(userId, 'Xin chào! Hãy kết bạn với tôi nhé!')
-
-      if (result.success) {
-        // Update local user state to reflect friend request sent
-        setUsers(prevUsers =>
-          prevUsers.map(user =>
-            user.userId === userId
-              ? { ...user, isFriend: true } // or add a "requestSent" status if available
-              : user
-          )
-        )
-
-        console.log('✅ Friend request sent successfully to:', userId)
-      } else {
-        console.error('❌ Failed to send friend request:', result.message)
-        alert(`❌ Failed to send friend request: ${result.message}`)
-      }
-    } catch (error) {
-      console.error('❌ Error sending friend request:', error)
-      alert('❌ An error occurred while sending friend request')
-    }
-    // Don't hide dropdown to allow multiple actions
   }
 
   // Handle keyboard navigation
@@ -217,7 +179,6 @@ export const UserSearch = () => {
                       key={user.userId}
                       user={user}
                       onViewProfile={handleViewProfile}
-                      onSendFriendRequest={handleSendFriendRequest}
                     />
                   ))
                 ) : inputValue.trim() && !isLoading ? (

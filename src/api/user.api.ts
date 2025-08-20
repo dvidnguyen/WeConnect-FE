@@ -13,8 +13,10 @@ export interface User {
   createdAt?: string;
   isOnline?: boolean;
   // BE relationship flags từ populateFriendAndBlockFlags
-  isFriend: boolean;
-  isBlocked: boolean;
+  isFriend?: boolean;  // For some APIs
+  friend?: boolean;    // For search API response
+  isBlocked?: boolean;
+  blocked?: boolean;   // For search API response
 }
 
 export interface SearchUsersResponse {

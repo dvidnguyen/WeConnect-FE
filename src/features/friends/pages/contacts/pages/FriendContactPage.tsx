@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { MessageCircle, User, Search, X, LoaderCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useContacts } from '@/features/friends/hooks/useContacts';
+import { useConversations } from '@/features/messages/hook/useConversations';
 import type { Contact } from '@/api/friend.api';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/shared/components/ui/dropdown-menu';
 import { Settings, Shield, ShieldBan, UserRoundMinus } from 'lucide-react';
@@ -9,8 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/shared/components/ui/button';
 
 const FriendContactPage = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const { contacts, loading, getContacts, cancelFriend, blockContact, unblockContact } = useContacts();
+  const { createDirectConversation } = useConversations();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [action, setAction] = useState<'unfriend' | 'block' | 'unblock' | null>(null);
@@ -34,8 +38,24 @@ const FriendContactPage = () => {
     (contact.email && contact.email.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const handleMessage = (contactId: string) => {
-    toast.info("Chức năng chat sẽ được triển khai sau");
+  const handleMessage = async (contactId: string) => {
+    try {
+      console.log('🔄 Creating conversation with contact:', contactId);
+      const conversation = await createDirectConversation(contactId);
+
+      if (conversation) {
+        console.log('✅ Conversation created, navigating to messages...');
+        navigate('/messages');
+        toast.success('Đã tạo cuộc trò chuyện!');
+      } else {
+        console.log('ℹ️ Conversation already exists or error occurred');
+        // Vẫn navigate đến messages page vì conversation có thể đã tồn tại
+        navigate('/messages');
+      }
+    } catch (error) {
+      console.error('❌ Error creating conversation:', error);
+      toast.error('Không thể tạo cuộc trò chuyện');
+    }
   };
 
   const openConfirmDialog = (contact: Contact, actionType: 'unfriend' | 'block' | 'unblock') => {
@@ -76,18 +96,16 @@ const FriendContactPage = () => {
   const ContactCard = ({ contact, isBlocked = false }: { contact: Contact; isBlocked?: boolean }) => (
     <div
       key={contact.id}
-      className={`flex items-center justify-between rounded-xl p-4 border transition-all duration-200 ${
-        isBlocked
-          ? 'bg-gray-50 dark:bg-gray-900/50 border-red-200 dark:border-red-800 opacity-60' 
+      className={`flex items-center justify-between rounded-xl p-4 border transition-all duration-200 ${isBlocked
+          ? 'bg-gray-50 dark:bg-gray-900/50 border-red-200 dark:border-red-800 opacity-60'
           : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50 hover:border-blue-500/20'
-      }`}
+        }`}
     >
       <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-full object-cover border flex items-center justify-center ${
-          isBlocked
-            ? 'border-red-300 dark:border-red-700 bg-gray-300 dark:bg-gray-600 grayscale' 
+        <div className={`w-12 h-12 rounded-full object-cover border flex items-center justify-center ${isBlocked
+            ? 'border-red-300 dark:border-red-700 bg-gray-300 dark:bg-gray-600 grayscale'
             : 'border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-700'
-        }`}>
+          }`}>
           {contact.avatarUrl ? (
             <img
               src={contact.avatarUrl}
@@ -95,30 +113,27 @@ const FriendContactPage = () => {
               className={`w-full h-full rounded-full object-cover ${isBlocked ? 'grayscale' : ''}`}
             />
           ) : (
-            <span className={`text-xl font-medium ${
-              isBlocked
-                ? 'text-gray-500 dark:text-gray-400' 
+            <span className={`text-xl font-medium ${isBlocked
+                ? 'text-gray-500 dark:text-gray-400'
                 : 'text-gray-700 dark:text-gray-200'
-            }`}>
+              }`}>
               {contact.name?.charAt(0)?.toUpperCase() || 'U'}
             </span>
           )}
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h3 className={`font-medium ${
-              isBlocked
-                ? 'text-gray-500 dark:text-gray-400' 
+            <h3 className={`font-medium ${isBlocked
+                ? 'text-gray-500 dark:text-gray-400'
                 : 'text-gray-900 dark:text-gray-100'
-            }`}>
+              }`}>
               {contact.name}
             </h3>
           </div>
-          <p className={`text-sm ${
-            isBlocked
-              ? 'text-gray-400 dark:text-gray-500' 
+          <p className={`text-sm ${isBlocked
+              ? 'text-gray-400 dark:text-gray-500'
               : 'text-gray-500'
-          }`}>
+            }`}>
             {contact.email}
           </p>
         </div>

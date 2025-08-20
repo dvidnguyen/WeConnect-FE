@@ -17,7 +17,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
       <PersistGate loading={null} persistor={persistor}>
         <SocketProvider>
           <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-            <div className="flex min-h-screen">
+            <div className="flex ">
               <main className="flex-1">
                 {children}
               </main>

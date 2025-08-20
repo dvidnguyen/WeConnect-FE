@@ -7,11 +7,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar"
 import { Button } from "@/shared/components/ui/button"
 import { useState, useEffect } from "react"
-import { UserPlus, MessageCircle, Loader2, UserCheck, UserX } from "lucide-react"
+import { UserPlus, MessageCircle, Loader2, UserCheck, UserX, Clock } from "lucide-react"
 import { userApi } from '@/api/user.api'
 import type { OtherUserProfile } from '@/api/user.api'
 import { useNavigate } from "react-router-dom"
-import { useFriendRequest } from '@/features/friends/hooks/useFriendRequest'
+import { useFriendRequest } from '../../friends/hooks/useFriendRequest.tsx'
+import { useConversations } from '../../messages/hook/useConversations'
+import { toast } from 'sonner'
 
 interface OtherUserProfileDialogProps {
   open: boolean
@@ -31,10 +33,14 @@ export function OtherUserProfileDialog({
   const [profile, setProfile] = useState<OtherUserProfile | null>(profileData || null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [requestSent, setRequestSent] = useState(false)
   const navigate = useNavigate()
 
   // Friend request hook
   const { sendFriendRequest, loading: friendRequestLoading } = useFriendRequest()
+
+  // Conversations hook
+  const { createDirectConversation } = useConversations()
 
   // Fetch profile data when dialog opens and userId is provided
   useEffect(() => {
@@ -52,8 +58,7 @@ export function OtherUserProfileDialog({
           setError(response.message || 'Failed to load user profile')
           alert(`❌ ${response.message || 'Failed to load user profile'}`)
         }
-      } catch (error) {
-        console.error('Error fetching user profile:', error)
+      } catch {
         setError('Network error occurred')
         alert('❌ Network error occurred')
       } finally {
@@ -83,8 +88,7 @@ export function OtherUserProfileDialog({
         setError(response.message || 'Failed to load user profile')
         alert(`❌ ${response.message || 'Failed to load user profile'}`)
       }
-    } catch (error) {
-      console.error('Error fetching user profile:', error)
+    } catch {
       setError('Network error occurred')
       alert('❌ Network error occurred')
     } finally {
@@ -114,41 +118,50 @@ export function OtherUserProfileDialog({
   const handleSendFriendRequest = async () => {
     if (!profile) return
 
-    console.log('🔄 Starting friend request process for user:', profile.userId)
-
     const result = await sendFriendRequest(
       profile.userId,
       `Xin chào ${profile.username}! Hãy kết bạn với tôi nhé!`
     )
 
-    console.log('📋 Friend request result:', result)
-
     if (result.success) {
-      // Update local profile state to reflect friend request sent
-      // Note: We might want to add a "pending" status to the profile
-      setProfile(prev => prev ? { ...prev, friend: true } : null)
-
-      // You might want to refetch the profile to get updated relationship status
-      // refetchProfile()
+      // Update local state to show request sent
+      setRequestSent(true)
     }
   }
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!profile) return
 
-    // Navigate to messages page with user info
-    navigate('/messages', {
-      state: {
-        targetUser: {
-          userId: profile.userId,
-          username: profile.username,
-          email: profile.email,
-          avatarUrl: profile.avatarUrl
-        }
+    try {
+      console.log('🔄 Creating conversation with user:', profile.userId);
+      const conversation = await createDirectConversation(profile.userId);
+
+      if (conversation) {
+        console.log('✅ Conversation created, navigating to messages...');
+        toast.success('Đã tạo cuộc trò chuyện!');
+      } else {
+        console.log('ℹ️ Conversation already exists or error occurred');
+        // Vẫn navigate vì conversation có thể đã tồn tại
       }
-    })
-    // Chỉ đóng dialog, không trigger navigation back
-    onOpenChange(false)
+
+      // Navigate to messages page với user info
+      navigate('/messages', {
+        state: {
+          targetUser: {
+            userId: profile.userId,
+            username: profile.username,
+            email: profile.email,
+            avatarUrl: profile.avatarUrl
+          }
+        }
+      })
+
+      // Chỉ đóng dialog, không trigger navigation back
+      onOpenChange(false)
+    } catch (error) {
+      console.error('❌ Error creating conversation:', error);
+      toast.error('Không thể tạo cuộc trò chuyện');
+    }
   }
 
   const getRelationshipStatus = () => {
@@ -168,6 +181,15 @@ export function OtherUserProfileDialog({
         <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-md">
           <UserCheck className="h-4 w-4 text-green-500" />
           <span className="text-sm text-green-700 dark:text-green-400">Đã kết bạn</span>
+        </div>
+      )
+    }
+
+    if (requestSent) {
+      return (
+        <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-md">
+          <Clock className="h-4 w-4 text-orange-500" />
+          <span className="text-sm text-orange-700 dark:text-orange-400">Đã gửi lời mời</span>
         </div>
       )
     }
@@ -245,7 +267,7 @@ export function OtherUserProfileDialog({
           {!profile.blocked && (
             <>
               {/* Friend Request Button */}
-              {!profile.friend && (
+              {!profile.friend && !requestSent && (
                 <Button
                   onClick={handleSendFriendRequest}
                   disabled={friendRequestLoading}
