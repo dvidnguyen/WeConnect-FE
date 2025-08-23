@@ -32,6 +32,7 @@ class SocketService {
   private friendRequestCallback?: (data: NotificationResponse) => void;
   private friendAcceptedCallback?: (data: NotificationResponse) => void;
   private friendRejectedCallback?: (data: NotificationResponse) => void;
+  private messageReceivedCallback?: (data: unknown) => void;
 
   connect(token: string) {
     if (this.socket?.connected) {
@@ -86,33 +87,14 @@ class SocketService {
         message: notificationData.body,
         avatar: notificationData.senderAvatarUrl
       });
-
-      // Call registered callback if exists
       this.friendRequestCallback?.(notificationData);
     });
 
     this.socket.on('friend-accepted', (notificationData: NotificationResponse) => {
-      console.log('✅ Friend request accepted:', notificationData);
-      console.log('📋 Accept details:', {
-        id: notificationData.id,
-        from: notificationData.senderName,
-        message: notificationData.body,
-        avatar: notificationData.senderAvatarUrl
-      });
-
-      // Call registered callback if exists
       this.friendAcceptedCallback?.(notificationData);
     });
 
     this.socket.on('friend-rejected', (notificationData: NotificationResponse) => {
-      console.log('❌ Friend request rejected:', notificationData);
-      console.log('📋 Reject details:', {
-        id: notificationData.id,
-        from: notificationData.senderName,
-        message: notificationData.body,
-        avatar: notificationData.senderAvatarUrl
-      });
-
       // Call registered callback if exists
       this.friendRejectedCallback?.(notificationData);
     });
@@ -121,7 +103,13 @@ class SocketService {
     this.socket.on('notification', (data: unknown) => {
       console.log('🔔 Notification:', data);
     });
+
+    this.socket.on('message', (data: unknown) => {
+      console.log('📩 Message received:', data);
+      this.messageReceivedCallback?.(data);
+    });
   }
+
 
   // Methods để register callbacks cho friend events
   onFriendRequest(callback: (data: NotificationResponse) => void) {
@@ -136,6 +124,7 @@ class SocketService {
     this.friendRejectedCallback = callback;
   }
 
+
   // Friend request methods (match với BE endpoints)
   sendFriendRequest(userId: string, message?: string) {
     // BE SendRequestFriendService expects: FriendRequest { to: string, body?: string }
@@ -144,30 +133,24 @@ class SocketService {
       body: message || 'Xin chào! Hãy kết bạn với tôi nhé!'
     };
 
-    console.log('📤 Sending friend request payload:', payload);
     this.emit('send_friend_request', payload);
   }
 
   acceptFriendRequest(requestId: string) {
     // BE SendRequestFriendService.acceptFriendRequest expects: FriendReactionRequest { id: string }
     const payload: FriendReactionPayload = { id: requestId };
-
-    console.log('✅ Accepting friend request payload:', payload);
     this.emit('accept_friend_request', payload);
   }
 
   rejectFriendRequest(requestId: string) {
     // BE SendRequestFriendService.rejectFriendRequest expects: FriendReactionRequest { id: string }
     const payload: FriendReactionPayload = { id: requestId };
-
-    console.log('❌ Rejecting friend request payload:', payload);
     this.emit('reject_friend_request', payload);
   }
 
   // Generic socket methods
   disconnect() {
     if (this.socket) {
-      console.log('🔌 Disconnecting socket...');
       this.socket.disconnect();
       this.socket = null;
     }

@@ -1,22 +1,75 @@
+import { useEffect, useRef } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 import { cn } from '@/shared/utils/cn.utils'
 import type { ConversationMessage } from '../../../api/conversation.api'
+import '../ScrollBar.css'
 
 interface ChatBodyProps {
   conversationId?: string
   messages: ConversationMessage[]
+  messageStatus?: {
+    [messageId: string]: 'sending' | 'sent' | 'error'
+  }
 }
 
-// Export as named export for proper module resolution
-export const ChatBody = ({ conversationId, messages }: ChatBodyProps) => {
+// Export as named export for convenience; we also export default at the end
+export const ChatBody = ({ conversationId, messages, messageStatus = {} }: ChatBodyProps) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto scroll to bottom when new messages arrive (use messages.length to avoid
+  // retriggering on stable message objects)
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages.length])
+
   // Format time function
   const formatTime = (timeString: string) => {
     const date = new Date(timeString)
+    // nếu bạn đang bù timezone bằng +17 giờ trước đó, giữ, nếu không xóa dòng dưới
+    // date.setHours(date.getHours() + 17)
     return date.toLocaleTimeString('vi-VN', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
     })
+  }
+
+  // Get status icon for message
+  const getStatusIcon = (messageId: string) => {
+    const status = messageStatus[messageId]
+    switch (status) {
+      case 'sending':
+        return (
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs text-muted-foreground">Đang gửi...</span>
+          </div>
+        )
+      case 'sent':
+        return (
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+              <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="text-xs text-green-500">Đã gửi</span>
+          </div>
+        )
+      case 'error':
+        return (
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+              <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="text-xs text-red-500">Gửi thất bại</span>
+          </div>
+        )
+      default:
+        return null
+    }
   }
 
   if (!conversationId) {
@@ -42,7 +95,7 @@ export const ChatBody = ({ conversationId, messages }: ChatBodyProps) => {
   }
 
   return (
-    <div className="flex-1 min-h-0  overflow-y-auto p-4 space-y-4">
+    <div className={`flex-1 min-h-0 overflow-y-auto custom-scrollbar`}>
       {messages.map((message) => (
         <div
           key={message.id}
@@ -53,11 +106,8 @@ export const ChatBody = ({ conversationId, messages }: ChatBodyProps) => {
         >
           {/* Avatar */}
           {!message.mine && (
-            <Avatar className="h-8 w-8 mt-1">
-              <AvatarImage src={message.senderAvatar || undefined} alt={message.senderName} />
-              <AvatarFallback className="text-xs">
-                {message.senderName.charAt(0).toUpperCase()}
-              </AvatarFallback>
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={message.senderAvatar ?? ""} />
             </Avatar>
           )}
 
@@ -83,68 +133,92 @@ export const ChatBody = ({ conversationId, messages }: ChatBodyProps) => {
               {message.type === 'text' && <p>{message.content}</p>}
 
               {/* Image Content */}
-              {message.type === 'image' && message.url && message.url.length > 0 && (
+              {message.type === 'image' && (
                 <div className="space-y-2">
                   {message.content && <p>{message.content}</p>}
-                  <div className="grid gap-2">
-                    {message.url.map((imageUrl, index) => (
-                      <img
-                        key={index}
-                        src={imageUrl}
-                        alt="Hình ảnh"
-                        className="max-w-full h-auto rounded"
-                        loading="lazy"
-                      />
-                    ))}
-                  </div>
+                  {message.url && message.url.length > 0 ? (
+                    <div className="grid gap-2">
+                      {message.url.map((imageUrl, index) => (
+                        <img
+                          key={index}
+                          src={imageUrl}
+                          alt="Hình ảnh"
+                          className="max-w-full h-auto rounded"
+                          loading="lazy"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-2 bg-muted/20 rounded text-sm">
+                      📷 Đang tải hình ảnh...
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* File Content */}
-              {message.type === 'file' && message.url && message.url.length > 0 && (
+              {message.type === 'file' && (
                 <div className="space-y-2">
                   {message.content && <p>{message.content}</p>}
-                  <div className="space-y-1">
-                    {message.url.map((fileUrl, index) => (
-                      <a
-                        key={index}
-                        href={message.urlDownload?.[index] || fileUrl}
-                        download
-                        className="block p-2 bg-background/20 rounded text-sm hover:bg-background/30 transition-colors"
-                      >
-                        📎 Tải xuống file
-                      </a>
-                    ))}
-                  </div>
+                  {message.url && message.url.length > 0 ? (
+                    <div className="space-y-1">
+                      {message.url.map((fileUrl, index) => (
+                        <a
+                          key={index}
+                          href={message.urlDownload?.[index] || fileUrl}
+                          download
+                          className="block p-2 bg-background/20 rounded text-sm hover:bg-background/30 transition-colors"
+                        >
+                          📎 Tải xuống file
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-2 bg-muted/20 rounded text-sm">
+                      📎 Đang tải file...
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Voice Content */}
-              {message.type === 'voice' && message.url && message.url.length > 0 && (
+              {message.type === 'voice' && (
                 <div className="space-y-2">
                   {message.content && <p>{message.content}</p>}
-                  {message.url.map((audioUrl, index) => (
-                    <audio key={index} controls className="max-w-full">
-                      <source src={audioUrl} type="audio/mpeg" />
-                      <source src={audioUrl} type="audio/wav" />
-                      <source src={audioUrl} type="audio/ogg" />
-                      Trình duyệt không hỗ trợ phát audio.
-                    </audio>
-                  ))}
+                  {message.url && message.url.length > 0 ? (
+                    message.url.map((audioUrl, index) => (
+                      <audio key={index} controls className="max-w-full">
+                        <source src={audioUrl} type="audio/mpeg" />
+                        <source src={audioUrl} type="audio/wav" />
+                        <source src={audioUrl} type="audio/ogg" />
+                        Trình duyệt không hỗ trợ phát audio.
+                      </audio>
+                    ))
+                  ) : (
+                    <div className="p-2 bg-muted/20 rounded text-sm">
+                      🎤 Đang tải audio...
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Timestamp */}
-            <span className={cn(
-              "text-xs text-muted-foreground",
-              message.mine ? "text-right" : "text-left"
+            {/* Timestamp and Status */}
+            <div className={cn(
+              "flex items-center gap-2",
+              message.mine ? "justify-end" : "justify-start"
             )}>
-              {formatTime(message.sentAt)}
-            </span>
+              <span className="text-xs text-muted-foreground">
+                {formatTime(message.sentAt)}
+              </span>
+              {/* Status chỉ hiển thị cho tin nhắn của mình */}
+              {message.mine && getStatusIcon(message.id)}
+            </div>
           </div>
         </div>
       ))}
+      {/* Invisible div for auto-scroll */}
+      <div ref={messagesEndRef} />
     </div>
   )
 }

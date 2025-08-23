@@ -9,7 +9,7 @@ const MessagesPage = () => {
   }
 
   return (
-    <div className="flex min-h-0">
+    <div className="flex h-full min-h-0 overflow-hidden">
       {/* Left: Conversation List */}
       <ConversationList
         selectedConversationId={selectedConversationId}

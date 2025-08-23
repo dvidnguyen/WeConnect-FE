@@ -18,6 +18,8 @@ interface SocketContextType {
   onFriendRequestRejected: (callback: (data: unknown) => void) => void;
   onNotification: (callback: (data: unknown) => void) => void;
   onConnected: (callback: (data: unknown) => void) => void;
+  onMessageReceived: (callback: (data: unknown) => void) => void; 
+  
 
   // Generic methods
   emit: (event: string, data?: unknown) => void;
@@ -66,6 +68,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     socketService.on('notification', callback);
   }, []);
 
+  const onMessageReceived = useCallback((callback: (data: unknown) => void) => {
+    socketService.on('message', callback); // BE sends 'message' event
+  }, []);
   // Listen for server connection confirmation
   const onConnected = useCallback((callback: (data: unknown) => void) => {
     socketService.on('connected', callback); // BE sends 'connected' on successful auth
@@ -146,7 +151,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     onFriendRequestRejected,
     onNotification,
     onConnected,
-
+    onMessageReceived,
     // Generic methods
     emit,
     on,

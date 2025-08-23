@@ -21,9 +21,22 @@ export const ChatFooter = ({ conversationId, onSendMessage, sending }: ChatFoote
   const [files, setFiles] = useState<File[]>([])
 
   const handleSendMessage = () => {
-    if (!message.trim() || !conversationId || sending) return
-    onSendMessage?.(message, 'text') // Chỉ gửi text
+    if ((!message.trim() && files.length === 0) || !conversationId || sending) return
+    
+    // Xác định type dựa trên files
+    let messageType: 'text' | 'image' | 'voice' = 'text'
+    if (files.length > 0) {
+      const firstFile = files[0]
+      if (firstFile.type.startsWith('image/')) {
+        messageType = 'image'
+      } else if (firstFile.type.startsWith('audio/')) {
+        messageType = 'voice'
+      }
+    }
+    
+    onSendMessage?.(message, messageType, files)
     setMessage('')
+    setFiles([]) // Reset files sau khi gửi
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -80,7 +93,7 @@ export const ChatFooter = ({ conversationId, onSendMessage, sending }: ChatFoote
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`h-9 w-9 p-0 ${isRecording ? 'text-red-500' : ''}`}
+                  className={`h-9 w-9 p-0 ${isRecording ? 'text-blue-500' : ''}`}
                   onClick={handleVoiceRecord}
                 >
                   <Mic className="h-4 w-4" />
@@ -128,9 +141,19 @@ export const ChatFooter = ({ conversationId, onSendMessage, sending }: ChatFoote
                   {file.name}
                 </span>
               ))}
-              <Button variant="ghost" size="sm" onClick={() => setFiles([])}>
-                Xóa file
-              </Button>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" onClick={() => setFiles([])}>
+                  Xóa file
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={handleSendMessage}
+                  disabled={sending}
+                >
+                  Gửi file
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -138,7 +161,7 @@ export const ChatFooter = ({ conversationId, onSendMessage, sending }: ChatFoote
         {/* Send Button */}
         <Button
           onClick={handleSendMessage}
-          disabled={!message.trim() || isRecording || sending}
+          disabled={(!message.trim() && files.length === 0) || isRecording || sending}
           size="sm"
           className="h-10 w-10 p-0"
         >

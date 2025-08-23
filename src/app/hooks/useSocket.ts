@@ -52,6 +52,10 @@ export const useSocket = () => {
       context.onConnected(callback as (data: unknown) => void);
     },
 
+    onMessageReceived: (callback: (data: unknown) => void) => {
+      context.onMessageReceived(callback);
+    },
+
     // Generic methods
     emit: context.emit,
     on: context.on,

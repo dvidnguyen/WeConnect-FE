@@ -80,7 +80,6 @@ export function useFriendRequest() {
   // Xử lý real-time friend requests
   useEffect(() => {
     const handleFriendRequest = (notificationData: NotificationResponse) => {
-      console.log('🔥 Real-time friend request received:', notificationData)
 
       toast.info(`${notificationData.senderName} muốn kết bạn với bạn`, {
         duration: 4000,

@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss"
-
+import scrollbar from 'tailwind-scrollbar'
 const config = {
-  darkMode: ["class"],
+  darkMode: ["class", "dark"],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -80,7 +80,9 @@ const config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    scrollbar({ nocompatible: true })
+  ],
 } satisfies Config
 
 export default config
