@@ -26,7 +26,7 @@ export const ChatBody = ({ conversationId, messages, messageStatus = {} }: ChatB
   const formatTime = (timeString: string) => {
     const date = new Date(timeString)
     // nếu bạn đang bù timezone bằng +17 giờ trước đó, giữ, nếu không xóa dòng dưới
-    // date.setHours(date.getHours() + 17)
+    date.setHours(date.getHours() + 17)
     return date.toLocaleTimeString('vi-VN', {
       hour: '2-digit',
       minute: '2-digit',
@@ -106,8 +106,11 @@ export const ChatBody = ({ conversationId, messages, messageStatus = {} }: ChatB
         >
           {/* Avatar */}
           {!message.mine && (
-            <Avatar className="w-8 h-8">
-              <AvatarImage src={message.senderAvatar ?? ""} />
+            <Avatar className="h-8 w-8 mt-1">
+              <AvatarImage src={message.senderAvatar || undefined} alt={message.senderName} />
+              <AvatarFallback className="text-xs">
+                {message.senderName.charAt(0).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
           )}
 

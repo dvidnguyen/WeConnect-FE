@@ -8,6 +8,9 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
 import type { Conversation } from '../../../api/conversation.api'
+import CallDialog from './CallDialog'
+import { useEffect, useState } from 'react'
+import { callService } from '@/services/call.service'
 
 interface ChatHeaderProps {
   conversation?: Conversation
@@ -31,6 +34,54 @@ export const ChatHeader = ({ conversation, conversationId }: ChatHeaderProps) =>
         <p className="text-muted-foreground">Chọn một cuộc trò chuyện để bắt đầu</p>
       </div>
     )
+  }
+
+  const [callDialogOpen, setCallDialogOpen] = useState(false)
+  const [callMedia, setCallMedia] = useState<'video' | 'audio'>('audio')
+  const [callerName, setCallerName] = useState<string>('')
+  const [callerAvatar, setCallerAvatar] = useState<string>('')
+
+  // Lắng nghe sự kiện call:ring
+  useEffect(() => {
+    const onRing = (data: { conversationId: string; fromUserId: string; media: string }) => {
+      setCallDialogOpen(true)
+      setCallMedia(data.media === 'video' ? 'video' : 'audio')
+      setCallerName(data.fromUserId) // Nếu có thể lấy tên từ userId thì thay bằng tên
+      setCallerAvatar('') // Nếu có thể lấy avatar từ userId thì thay bằng avatar
+    }
+
+    callService.onCallRing(onRing)
+
+    return () => {
+      // Clean up listener để tránh leak / override callback
+      callService.offCallRing()
+    }
+  }, [])
+
+  const handleAcceptCall = () => {
+    if (conversationId) {
+      callService.acceptCall(conversationId)
+      setCallDialogOpen(false)
+    }
+  }
+
+  const handleRejectCall = () => {
+    if (conversationId) {
+      callService.rejectCall(conversationId)
+      setCallDialogOpen(false)
+    }
+  }
+
+  const handleVoiceCall = () => {
+    if (conversationId) {
+      callService.inviteCall(conversationId, 'audio')
+    }
+  }
+
+  const handleVideoCall = () => {
+    if (conversationId) {
+      callService.inviteCall(conversationId, 'video')
+    }
   }
 
   return (
@@ -61,10 +112,10 @@ export const ChatHeader = ({ conversation, conversationId }: ChatHeaderProps) =>
       <div className="flex items-center gap-2">
         {conversation.type === 'direct' && (
           <>
-            <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={handleVoiceCall}>
               <Phone className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+            <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={handleVideoCall}>
               <Video className="h-4 w-4" />
             </Button>
           </>
@@ -87,6 +138,17 @@ export const ChatHeader = ({ conversation, conversationId }: ChatHeaderProps) =>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      {/* CallDialog cho người nhận */}
+      <CallDialog
+        open={callDialogOpen}
+        media={callMedia}
+        callerName={callerName}
+        callerAvatar={callerAvatar}
+        calleeName={conversation?.name}
+        calleeAvatar={conversation?.avatar || ''}
+        onAccept={handleAcceptCall}
+        onReject={handleRejectCall}
+      />
     </div>
   )
 }

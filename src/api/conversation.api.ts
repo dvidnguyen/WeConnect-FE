@@ -79,9 +79,9 @@ export const conversationAPI = {
   },
 
   // Delete conversation
-  deleteConversation: async (id: string): Promise<void> => {
-    await api.delete(API_ENDPOINTS.CONVERSATIONS.DELETE(id));
-  },
+  // deleteConversation: async (id: string): Promise<void> => {
+  //   await api.delete(API_ENDPOINTS.CONVERSATIONS.DELETE(id));
+  // },
 
   // Get messages for a specific conversation
   getConversationMessages: async (
@@ -91,6 +91,10 @@ export const conversationAPI = {
     after?: string
   ): Promise<ConversationMessagesResponse> => {
     const response = await api.get(API_ENDPOINTS.CONVERSATIONS.GET_PER_CONSERVATION(conversationId, limit, before, after));
+    return response.data;
+  },
+  inviteMember: async (conversationId: string, userId: string): Promise<void> => {
+    const response = await api.post(API_ENDPOINTS.CONVERSATIONS.INVITE(conversationId), { userId });
     return response.data;
   },
 };

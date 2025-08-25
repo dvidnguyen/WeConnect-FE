@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { friendApi, type Contact } from '@/api/friend.api';
 import { toast } from 'sonner';
+import { conversationAPI, type ConversationMessage } from '@/api/conversation.api';
 
 export const useContacts = () => {
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,6 @@ export const useContacts = () => {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Error getting contacts:', error);
       toast.error('Đã xảy ra lỗi khi tải danh sách bạn bè', {
         duration: 3000,
         dismissible: true,
@@ -42,7 +42,7 @@ export const useContacts = () => {
         setContacts(prevContacts =>
           prevContacts.filter(contact => contact.id !== friendId)
         );
-        
+
         // Toast với timeout ngắn và không block UI
         setTimeout(() => {
           toast.success('Đã hủy kết bạn thành công', {
@@ -51,7 +51,7 @@ export const useContacts = () => {
             position: 'top-right'
           });
         }, 100);
-        
+
         return { success: true };
       } else {
         toast.error(response.message || 'Không thể hủy kết bạn', {
@@ -83,7 +83,7 @@ export const useContacts = () => {
               : contact
           )
         );
-        
+
         // Toast với timeout ngắn
         setTimeout(() => {
           toast.success('Đã chặn người dùng thành công', {
@@ -92,7 +92,7 @@ export const useContacts = () => {
             position: 'top-right'
           });
         }, 100);
-        
+
         return { success: true };
       } else {
         toast.error(response.message || 'Không thể chặn người dùng', {
@@ -124,7 +124,7 @@ export const useContacts = () => {
               : contact
           )
         );
-        
+
         // Toast với timeout ngắn
         setTimeout(() => {
           toast.success('Đã bỏ chặn người dùng thành công', {
@@ -133,7 +133,7 @@ export const useContacts = () => {
             position: 'top-right'
           });
         }, 100);
-        
+
         return { success: true };
       } else {
         toast.error(response.message || 'Không thể bỏ chặn người dùng', {
@@ -152,6 +152,36 @@ export const useContacts = () => {
     }
   }, []);
 
+  // Tạo hoặc lấy cuộc trò chuyện trực tiếp
+  const createOrGetDirectConversation = useCallback(async (contactId: string): Promise<{ conversationId: string; messages: ConversationMessage[] } | null> => {
+    try {
+      setLoading(true);
+      const response = await friendApi.createDirectConversation(contactId);
+
+      if (response.code === 200 && response.result) {
+        const conversationId = response.result.conversationId;
+        toast.success('Đã tạo hoặc mở cuộc trò chuyện! 111');
+
+        // Fetch messages for the conversation
+        const messagesResponse = await conversationAPI.getConversationMessages(conversationId);
+        if (messagesResponse.code === 200) {
+          return { conversationId, messages: messagesResponse.result.items };
+        } else {
+          toast.error('Không thể tải tin nhắn của cuộc trò chuyện');
+          return { conversationId, messages: [] };
+        }
+      } else {
+        toast.error(response.message || 'Không thể tạo hoặc mở cuộc trò chuyện');
+        return null;
+      }
+    } catch {
+      toast.error('Đã xảy ra lỗi khi tạo hoặc mở cuộc trò chuyện 1111');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     contacts,
@@ -159,6 +189,7 @@ export const useContacts = () => {
     cancelFriend,
     blockContact,
     unblockContact,
+    createOrGetDirectConversation,
     setContacts
   };
 };

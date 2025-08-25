@@ -22,7 +22,7 @@ export const ChatFooter = ({ conversationId, onSendMessage, sending }: ChatFoote
 
   const handleSendMessage = () => {
     if ((!message.trim() && files.length === 0) || !conversationId || sending) return
-    
+
     // Xác định type dựa trên files
     let messageType: 'text' | 'image' | 'voice' = 'text'
     if (files.length > 0) {
@@ -33,7 +33,7 @@ export const ChatFooter = ({ conversationId, onSendMessage, sending }: ChatFoote
         messageType = 'voice'
       }
     }
-    
+
     onSendMessage?.(message, messageType, files)
     setMessage('')
     setFiles([]) // Reset files sau khi gửi
@@ -55,7 +55,6 @@ export const ChatFooter = ({ conversationId, onSendMessage, sending }: ChatFoote
   const handleVoiceRecord = () => {
     setIsRecording(!isRecording)
     // TODO: Implement voice recording
-    console.log('Voice record clicked')
   }
 
   if (!conversationId) {
@@ -145,9 +144,9 @@ export const ChatFooter = ({ conversationId, onSendMessage, sending }: ChatFoote
                 <Button variant="ghost" size="sm" onClick={() => setFiles([])}>
                   Xóa file
                 </Button>
-                <Button 
-                  variant="default" 
-                  size="sm" 
+                <Button
+                  variant="default"
+                  size="sm"
                   onClick={handleSendMessage}
                   disabled={sending}
                 >

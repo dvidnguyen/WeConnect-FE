@@ -1,17 +1,17 @@
 import { io } from 'socket.io-client';
 
 // Interface match chính xác với NotificationResponse từ BE
-interface NotificationResponse {
+export interface NotificationResponse {
   id: string;
   body: string;
-  title: string; // username của người gửi
-  type: string; // "FRIEND"
+  title: string;
+  type: string;
   isRead: boolean;
   senderId: string;
   senderName: string;
   senderAvatarUrl?: string;
-  relatedId?: string; // friend.getId()
-  createdAt: string; // LocalDateTime từ BE
+  relatedId?: string;
+  createdAt: string;
 }
 
 // Interface cho FriendRequest BE expects
@@ -22,29 +22,25 @@ interface FriendRequestPayload {
 
 // Interface cho FriendReactionRequest BE expects
 interface FriendReactionPayload {
-  id: string; // Friend request ID
+  id: string;
 }
 
 class SocketService {
-  private socket: ReturnType<typeof io> | null = null;
+  protected socket: ReturnType<typeof io> | null = null;
 
   // Callback handlers cho friend events
   private friendRequestCallback?: (data: NotificationResponse) => void;
   private friendAcceptedCallback?: (data: NotificationResponse) => void;
   private friendRejectedCallback?: (data: NotificationResponse) => void;
-  private messageReceivedCallback?: (data: unknown) => void;
 
   connect(token: string) {
     if (this.socket?.connected) {
-      alert('Socket already connected line 37');
+      console.log('Socket already connected');
       return;
     }
 
-    // Kết nối với server với token
     this.socket = io('http://localhost:8099', {
-      query: {
-        token: token
-      },
+      query: { token },
       transports: ['websocket', 'polling'],
       timeout: 20000,
       forceNew: true
@@ -53,13 +49,12 @@ class SocketService {
     this.setupEventListeners();
   }
 
-  private setupEventListeners() {
+  protected setupEventListeners() {
     if (!this.socket) return;
 
     // Connection events
     this.socket.on('connect', () => {
-      // alert('✅ Socket connected successfully');
-      // console.log('Socket ID:', this.socket?.id);
+      console.log('✅ Socket connected successfully');
     });
 
     this.socket.on('connected', (data: unknown) => {
@@ -78,15 +73,8 @@ class SocketService {
       console.error('❌ Socket error:', error);
     });
 
-    // Friend-related events (match với BE SendRequestFriendService)
+    // Friend-related events
     this.socket.on('friend', (notificationData: NotificationResponse) => {
-      console.log('👤 Friend request received:', notificationData);
-      console.log('📋 Friend request details:', {
-        id: notificationData.id,
-        from: notificationData.senderName,
-        message: notificationData.body,
-        avatar: notificationData.senderAvatarUrl
-      });
       this.friendRequestCallback?.(notificationData);
     });
 
@@ -95,7 +83,6 @@ class SocketService {
     });
 
     this.socket.on('friend-rejected', (notificationData: NotificationResponse) => {
-      // Call registered callback if exists
       this.friendRejectedCallback?.(notificationData);
     });
 
@@ -103,13 +90,7 @@ class SocketService {
     this.socket.on('notification', (data: unknown) => {
       console.log('🔔 Notification:', data);
     });
-
-    this.socket.on('message', (data: unknown) => {
-      console.log('📩 Message received:', data);
-      this.messageReceivedCallback?.(data);
-    });
   }
-
 
   // Methods để register callbacks cho friend events
   onFriendRequest(callback: (data: NotificationResponse) => void) {
@@ -124,26 +105,21 @@ class SocketService {
     this.friendRejectedCallback = callback;
   }
 
-
-  // Friend request methods (match với BE endpoints)
+  // Friend request methods
   sendFriendRequest(userId: string, message?: string) {
-    // BE SendRequestFriendService expects: FriendRequest { to: string, body?: string }
     const payload: FriendRequestPayload = {
       to: userId,
       body: message || 'Xin chào! Hãy kết bạn với tôi nhé!'
     };
-
     this.emit('send_friend_request', payload);
   }
 
   acceptFriendRequest(requestId: string) {
-    // BE SendRequestFriendService.acceptFriendRequest expects: FriendReactionRequest { id: string }
     const payload: FriendReactionPayload = { id: requestId };
     this.emit('accept_friend_request', payload);
   }
 
   rejectFriendRequest(requestId: string) {
-    // BE SendRequestFriendService.rejectFriendRequest expects: FriendReactionRequest { id: string }
     const payload: FriendReactionPayload = { id: requestId };
     this.emit('reject_friend_request', payload);
   }
@@ -156,7 +132,7 @@ class SocketService {
     }
   }
 
-  emit(event: string, data?: unknown) {
+  protected emit(event: string, data?: unknown) {
     if (this.socket?.connected) {
       this.socket.emit(event, data);
     } else {
@@ -185,5 +161,4 @@ class SocketService {
   }
 }
 
-// FINAL CLEAN EXPORT
 export const socketService = new SocketService();

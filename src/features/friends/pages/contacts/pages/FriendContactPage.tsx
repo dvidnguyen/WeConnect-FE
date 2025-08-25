@@ -1,33 +1,67 @@
+// FriendContactPage.tsx
 import { useState, useEffect } from 'react';
 import { MessageCircle, User, Search, X, LoaderCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useContacts } from '@/features/friends/hooks/useContacts';
 import { useConversations } from '@/features/messages/hook/useConversations';
+import { conversationAPI, type ConversationMessage } from '@/api/conversation.api';
 import type { Contact } from '@/api/friend.api';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/shared/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
+} from '@/shared/components/ui/dropdown-menu';
 import { Settings, Shield, ShieldBan, UserRoundMinus } from 'lucide-react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/shared/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
+} from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
+
+const SESSION_KEY = 'weconnect_current_conversation';
 
 const FriendContactPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [search, setSearch] = useState('');
-  const { contacts, loading, getContacts, cancelFriend, blockContact, unblockContact } = useContacts();
+  const {
+    contacts,
+    loading,
+    getContacts,
+    cancelFriend,
+    blockContact,
+    unblockContact,
+    createOrGetDirectConversation,
+    setContacts
+  } = useContacts();
+  // (you had createDirectConversation earlier; keeping useConversations in case needed elsewhere)
   const { createDirectConversation } = useConversations();
+
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [action, setAction] = useState<'unfriend' | 'block' | 'unblock' | null>(null);
+
+  // per-contact loading map so only that contact's button is disabled
+  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     getContacts();
   }, [getContacts]);
 
-  // Tách contacts thành 2 nhóm: bình thường và đã bị chặn
+  // groups
   const activeContacts = contacts.filter((contact: Contact) => !contact.block);
   const blockedContacts = contacts.filter((contact: Contact) => contact.block);
 
-  // Filter cho cả 2 nhóm
+  // filtered
   const filteredActiveContacts = activeContacts.filter((contact: Contact) =>
     (contact.name && contact.name.toLowerCase().includes(search.toLowerCase())) ||
     (contact.email && contact.email.toLowerCase().includes(search.toLowerCase()))
@@ -38,23 +72,76 @@ const FriendContactPage = () => {
     (contact.email && contact.email.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const handleMessage = async (contactId: string) => {
-    try {
-      console.log('🔄 Creating conversation with contact:', contactId);
-      const conversation = await createDirectConversation(contactId);
+  const setLoadingFor = (id: string, v: boolean) => {
+    setLoadingMap(prev => ({ ...prev, [id]: v }));
+  };
 
-      if (conversation) {
-        console.log('✅ Conversation created, navigating to messages...');
-        navigate('/messages');
-        toast.success('Đã tạo cuộc trò chuyện!');
+  const handleMessage = async (contact: Contact) => {
+    if (!contact) return;
+    setLoadingFor(contact.id, true);
+
+    try {
+      let conversationId: string | undefined;
+      let messages: ConversationMessage[] = [];
+
+      if (contact.conversationId) {
+        // conversationId already exists on contact -> prefetch messages (optional)
+        conversationId = contact.conversationId;
+        try {
+          const msgResp = await conversationAPI.getConversationMessages(conversationId, 15);
+          if (msgResp?.code === 200) {
+            messages = msgResp.result?.items ?? [];
+          } else {
+            // still proceed to open conversation even if prefetch failed
+            console.warn('Prefetch messages failed', msgResp);
+            toast.error('Không thể tải tin nhắn trước, vẫn sẽ mở cuộc trò chuyện.');
+          }
+        } catch (err) {
+          console.error('Prefetch messages error', err);
+          toast.error('Lỗi khi lấy tin nhắn (prefetch). Vẫn mở cuộc trò chuyện.');
+        }
       } else {
-        console.log('ℹ️ Conversation already exists or error occurred');
-        // Vẫn navigate đến messages page vì conversation có thể đã tồn tại
-        navigate('/messages');
+        // need to create or get conversation
+        const result = await createOrGetDirectConversation(contact.id);
+        if (!result?.conversationId) {
+          toast.error('Không thể tạo hoặc mở cuộc trò chuyện');
+          return;
+        }
+        conversationId = result.conversationId;
+        messages = result.messages ?? [];
+
+        // update local contacts so next time we won't create again
+        setContacts(prev =>
+          prev.map(c => (c.id === contact.id ? { ...c, conversationId } : c))
+        );
       }
-    } catch (error) {
-      console.error('❌ Error creating conversation:', error);
-      toast.error('Không thể tạo cuộc trò chuyện');
+
+      if (!conversationId) {
+        toast.error('Conversation id missing');
+        return;
+      }
+
+      // Save to sessionStorage as fallback (so page can recover on reload)
+      try {
+        sessionStorage.setItem(SESSION_KEY, conversationId);
+      } catch (err) {
+        console.warn('sessionStorage set error', err);
+      }
+
+      // Navigate to frontend messages page with payload
+      navigate('/messages', {
+        state: {
+          conversationId,
+          initialMessages: messages
+        }
+      });
+
+      toast.success('Đã mở cuộc trò chuyện!');
+    } catch (err) {
+      console.error('handleMessage error', err);
+      toast.error('Đã xảy ra lỗi khi mở cuộc trò chuyện');
+    } finally {
+      setLoadingFor(contact.id, false);
     }
   };
 
@@ -77,6 +164,7 @@ const FriendContactPage = () => {
       }
     } catch (error) {
       console.error('Error in handleConfirmAction:', error);
+      toast.error('Đã xảy ra lỗi khi thực hiện thao tác');
     } finally {
       setConfirmDialogOpen(false);
       setSelectedContact(null);
@@ -89,108 +177,105 @@ const FriendContactPage = () => {
       await unblockContact(contactId);
     } catch (error) {
       console.error('Error unblocking contact:', error);
+      toast.error('Lỗi khi bỏ chặn');
     }
   };
 
-  // Component để render contact card
-  const ContactCard = ({ contact, isBlocked = false }: { contact: Contact; isBlocked?: boolean }) => (
-    <div
-      key={contact.id}
-      className={`flex items-center justify-between rounded-xl p-4 border transition-all duration-200 ${isBlocked
+  // ContactCard - note: key is provided in parent map
+  const ContactCard = ({ contact, isBlocked = false }: { contact: Contact; isBlocked?: boolean }) => {
+    const isProcessing = !!loadingMap[contact.id];
+
+    return (
+      <div
+        className={`flex items-center justify-between rounded-xl p-4 border transition-all duration-200 ${isBlocked
           ? 'bg-gray-50 dark:bg-gray-900/50 border-red-200 dark:border-red-800 opacity-60'
           : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700/50 hover:border-blue-500/20'
-        }`}
-    >
-      <div className="flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-full object-cover border flex items-center justify-center ${isBlocked
+          }`}
+      >
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-full object-cover border flex items-center justify-center ${isBlocked
             ? 'border-red-300 dark:border-red-700 bg-gray-300 dark:bg-gray-600 grayscale'
             : 'border-gray-200 dark:border-gray-700 bg-gray-200 dark:bg-gray-700'
-          }`}>
-          {contact.avatarUrl ? (
-            <img
-              src={contact.avatarUrl}
-              alt={contact.name}
-              className={`w-full h-full rounded-full object-cover ${isBlocked ? 'grayscale' : ''}`}
-            />
-          ) : (
-            <span className={`text-xl font-medium ${isBlocked
+            }`}>
+            {contact.avatarUrl ? (
+              <img
+                src={contact.avatarUrl}
+                alt={contact.name}
+                className={`w-full h-full rounded-full object-cover ${isBlocked ? 'grayscale' : ''}`}
+              />
+            ) : (
+              <span className={`text-xl font-medium ${isBlocked
                 ? 'text-gray-500 dark:text-gray-400'
                 : 'text-gray-700 dark:text-gray-200'
-              }`}>
-              {contact.name?.charAt(0)?.toUpperCase() || 'U'}
-            </span>
-          )}
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className={`font-medium ${isBlocked
+                }`}>
+                {contact.name?.charAt(0)?.toUpperCase() || 'U'}
+              </span>
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className={`font-medium ${isBlocked
                 ? 'text-gray-500 dark:text-gray-400'
                 : 'text-gray-900 dark:text-gray-100'
-              }`}>
-              {contact.name}
-            </h3>
+                }`}>
+                {contact.name}
+              </h3>
+            </div>
+            <p className={`text-sm ${isBlocked ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500'}`}>
+              {contact.email}
+            </p>
           </div>
-          <p className={`text-sm ${isBlocked
-              ? 'text-gray-400 dark:text-gray-500'
-              : 'text-gray-500'
-            }`}>
-            {contact.email}
-          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isBlocked ? (
+            <button
+              onClick={() => handleUnblock(contact.id)}
+              className="px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200"
+            >
+              Gỡ chặn
+            </button>
+          ) : (
+            <button
+              onClick={() => handleMessage(contact)}
+              className="p-2 text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200"
+              title="Message"
+              disabled={isProcessing}
+            >
+              {isProcessing ? <span className="text-sm">...</span> : <MessageCircle className="h-5 w-5" />}
+            </button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                <Settings className="w-5 h-5" />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent className="w-56" align="end" side="top">
+              <DropdownMenuLabel>Tùy chọn</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {!isBlocked && (
+                <DropdownMenuItem onSelect={() => handleMessage(contact)}>
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Nhắn tin
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onSelect={() => openConfirmDialog(contact, 'unfriend')}>
+                <UserRoundMinus className="mr-2 h-4 w-4" />
+                Hủy kết bạn
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => openConfirmDialog(contact, isBlocked ? 'unblock' : 'block')}>
+                {isBlocked ? <Shield className="mr-2 h-4 w-4" /> : <ShieldBan className="mr-2 h-4 w-4" />}
+                {isBlocked ? 'Bỏ chặn' : 'Chặn'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        {isBlocked ? (
-          // Nút gỡ chặn cho contacts đã bị chặn
-          <button
-            onClick={() => handleUnblock(contact.id)}
-            className="px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200"
-          >
-            Gỡ chặn
-          </button>
-        ) : (
-          // Nút nhắn tin cho contacts bình thường
-          <button
-            onClick={() => handleMessage(contact.id)}
-            className="p-2 text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200"
-            title="Message"
-          >
-            <MessageCircle className="h-5 w-5" />
-          </button>
-        )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-2 text-gray-500 hover:text-blue-500 dark:hover:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200">
-              <Settings className="w-5 h-5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" side="top">
-            <DropdownMenuLabel>Tùy chọn</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {!isBlocked && (
-              <DropdownMenuItem onSelect={() => handleMessage(contact.id)}>
-                <MessageCircle className="mr-2 h-4 w-4" />
-                Nhắn tin
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onSelect={() => openConfirmDialog(contact, 'unfriend')}>
-              <UserRoundMinus className="mr-2 h-4 w-4" />
-              Hủy kết bạn
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() =>
-              openConfirmDialog(contact, isBlocked ? 'unblock' : 'block')
-            }>
-              {isBlocked ? (
-                <Shield className="mr-2 h-4 w-4" />
-              ) : (
-                <ShieldBan className="mr-2 h-4 w-4" />
-              )}
-              {isBlocked ? 'Bỏ chặn' : 'Chặn'}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -245,7 +330,7 @@ const FriendContactPage = () => {
             </div>
           ) : (
             <div className="space-y-6 pb-6">
-              {/* Danh sách bạn bè bình thường */}
+              {/* Active */}
               {filteredActiveContacts.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -261,7 +346,7 @@ const FriendContactPage = () => {
                 </div>
               )}
 
-              {/* Thanh ngang và danh sách đã chặn */}
+              {/* Blocked */}
               {filteredBlockedContacts.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-4 pt-6 border-t border-gray-200 dark:border-gray-700">
