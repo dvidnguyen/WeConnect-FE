@@ -184,15 +184,6 @@ export const userApi = {
     }
   },
 
-  // Change password
-  changePassword: async (oldPassword: string, newPassword: string): Promise<{ code: number; message: string }> => {
-    const response = await api.post(API_ENDPOINTS.USER.CHANGE_PASSWORD, {
-      oldPassword,
-      newPassword
-    });
-    return response.data;
-  },
-
   // Upload avatar
   uploadAvatar: async (file: File): Promise<{ code: number; message: string; result: { avatarUrl: string } }> => {
     const formData = new FormData();

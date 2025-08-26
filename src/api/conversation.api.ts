@@ -63,6 +63,26 @@ export interface ConversationMessagesResponse {
     pageInfo: PageInfo;
   };
 }
+export interface InviteMemberResponse {
+  code: number;
+  message: string;
+  result?: {
+    conversationId: string;
+    added: string[];
+    alreadyMembers: string[];
+    notFound: string[];
+  };
+}
+export interface LeaveConversationResponse {
+  code: number;
+  message: string;
+  result?: {
+    conversationId: string;
+    leaverId: string;
+    conversationDeleted: boolean;
+    promotedToAdmin: string | null;
+  };
+}
 
 // API Methods
 export const conversationAPI = {
@@ -93,8 +113,22 @@ export const conversationAPI = {
     const response = await api.get(API_ENDPOINTS.CONVERSATIONS.GET_PER_CONSERVATION(conversationId, limit, before, after));
     return response.data;
   },
-  inviteMember: async (conversationId: string, userId: string): Promise<void> => {
-    const response = await api.post(API_ENDPOINTS.CONVERSATIONS.INVITE(conversationId), { userId });
-    return response.data;
+  inviteMember: async (id: string): Promise<InviteMemberResponse> => {
+    try {
+      const response = await api.post(API_ENDPOINTS.CONVERSATIONS.INVITE(id));
+      return response.data;
+    } catch (error) {
+      console.error('[conversationAPI] inviteMember error:', error);
+      throw error;
+    }
   },
-};
+  leaveConversation: async (id: string): Promise<LeaveConversationResponse> => {
+    try {
+      const response = await api.post(API_ENDPOINTS.CONVERSATIONS.LEAVE(id));
+      return response.data;
+    } catch (error) {
+      console.error('[conversationAPI] leaveConversation error:', error);
+      throw error;
+    }
+  },
+}

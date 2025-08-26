@@ -23,12 +23,11 @@ export const API_ENDPOINTS = {
   CONVERSATIONS: {
     CREATE: '/api/conversations/create',
     LIST: `/api/conversations`,
-    GET_BY_ID: (id: string) => `/conversations/${id}`,
     // DELETE: (id: string) => `/conversations/${id}`,
     GET_PER_CONSERVATION: (id: string, limit: number = 15, before?: string, after?: string) => {
       let url = `/api/conversations/${id}/messages?limit=${limit}`;
       if (before) url += `&before=${before}`;
-      if (after) url += `&after=${after}`;
+      if (after) url += `&after=${after}`;                                
       return url;
     },
     INVITE: (id: string) => `/api/conversations/${id}/members/invite`,

@@ -4,7 +4,8 @@ import { cn } from '@/shared/utils/cn.utils'
 import { useConversations } from '../hook/useConversations'
 import { useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
-
+import { messageService } from '@/services/message.service'
+import conversationService from '@/services/conservation.service'
 interface ConversationListProps {
   selectedConversationId?: string
   onSelectConversation: (conversationId: string) => void
@@ -18,7 +19,28 @@ export const ConversationList = ({ selectedConversationId, onSelectConversation 
     getConversations()
   }, [getConversations])
 
-  // Format time function
+  // useEffect(() => {
+  //   // handler for conversation:update (dispatched by conversationService)
+  //   const onConvUpdate = (payloadAny: any) => {
+  //     const payload = payloadAny?.detail ?? payloadAny
+  //     if (!payload || !payload.conversationId) return
+  //     // simplest: refresh whole list from backend to ensure authoritative state
+  //     // (this calls your existing hook that fetches conversations and updates state)
+  //     getConversations()
+  //   }
+
+  //   // 1) Listen via conversationService callback (preferred)
+  //   conversationService.onConversationUpdate(onConvUpdate)
+
+  //   // 2) Also listen to window event (messageService or optimistic dispatchers may use it)
+  //   window.addEventListener('conversation:update', onConvUpdate)
+
+  //   // Cleanup on unmount
+  //   return () => {
+  //     conversationService.offConversationUpdate()
+  //     window.removeEventListener('conversation:update', onConvUpdate)
+  //   }
+  // }, [getConversations])
   const formatTime = (timeString: string | null) => {
     if (!timeString) {
       return 'Mới tạo'

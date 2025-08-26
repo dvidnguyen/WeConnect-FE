@@ -28,7 +28,10 @@ interface FriendReactionPayload {
 class SocketService {
   protected socket: ReturnType<typeof io> | null = null;
 
-  // Callback handlers cho friend events
+  // store listeners so they can be attached once socket connects
+  private queuedListeners: Map<string, Set<(data: unknown) => void>> = new Map();
+
+  // Callback handlers cho friend events (kept for compatibility)
   private friendRequestCallback?: (data: NotificationResponse) => void;
   private friendAcceptedCallback?: (data: NotificationResponse) => void;
   private friendRejectedCallback?: (data: NotificationResponse) => void;
@@ -40,12 +43,15 @@ class SocketService {
     }
 
     this.socket = io('http://localhost:8099', {
+      // many servers expect auth instead of query; adjust if your BE uses auth
+      // auth: { token },
       query: { token },
       transports: ['websocket', 'polling'],
       timeout: 20000,
       forceNew: true
     });
 
+    // attach core internal listeners and also attach queued listeners
     this.setupEventListeners();
   }
 
@@ -54,7 +60,17 @@ class SocketService {
 
     // Connection events
     this.socket.on('connect', () => {
-      console.log('✅ Socket connected successfully');
+      console.log('✅ Socket connected successfully, id=', this.socket?.id);
+      // attach any queued listeners that were registered before connect
+      for (const [event, handlers] of Array.from(this.queuedListeners.entries())) {
+        handlers.forEach(h => {
+          try {
+            this.socket?.on(event, h);
+          } catch (e) {
+            console.warn('Failed attach queued listener', event, e);
+          }
+        });
+      }
     });
 
     this.socket.on('connected', (data: unknown) => {
@@ -73,7 +89,7 @@ class SocketService {
       console.error('❌ Socket error:', error);
     });
 
-    // Friend-related events
+    // Friend-related events (also call queued ones if any)
     this.socket.on('friend', (notificationData: NotificationResponse) => {
       this.friendRequestCallback?.(notificationData);
     });
@@ -92,7 +108,7 @@ class SocketService {
     });
   }
 
-  // Methods để register callbacks cho friend events
+  // Methods để register callbacks cho friend events (backwards compat)
   onFriendRequest(callback: (data: NotificationResponse) => void) {
     this.friendRequestCallback = callback;
   }
@@ -132,23 +148,58 @@ class SocketService {
     }
   }
 
-  protected emit(event: string, data?: unknown) {
+  /**
+   * emit with optional ack callback
+   * usage: emit('event', payload, (ack) => console.log(ack))
+   */
+  protected emit(event: string, data?: unknown, ack?: (res: unknown) => void) {
     if (this.socket?.connected) {
-      this.socket.emit(event, data);
+      if (ack && typeof ack === 'function') {
+        this.socket.emit(event, data, ack);
+      } else {
+        this.socket.emit(event, data);
+      }
     } else {
-      console.warn('❌ Cannot emit: Socket not connected');
+      console.warn('❌ Cannot emit: Socket not connected', { event, data });
     }
   }
 
+  /**
+   * Register listener. This will be queued and attached when socket connects.
+   * If socket already exists, attach immediately.
+   */
   on(event: string, callback: (data: unknown) => void) {
+    // store in queue map
+    if (!this.queuedListeners.has(event)) this.queuedListeners.set(event, new Set());
+    this.queuedListeners.get(event)!.add(callback);
+
+    // if socket present attach now
     if (this.socket) {
       this.socket.on(event, callback);
     }
   }
 
+  /**
+   * Remove a previously registered listener. If no callback provided, remove all for that event.
+   */
   off(event: string, callback?: (data: unknown) => void) {
+    // remove from socket if connected
     if (this.socket) {
-      this.socket.off(event, callback);
+      if (callback) {
+        this.socket.off(event, callback);
+      } else {
+        // remove all queued handlers from actual socket
+        const cbs = this.queuedListeners.get(event);
+        cbs?.forEach(cb => {
+          try { this.socket?.off(event, cb); } catch (e) { /* ignore */ }
+        });
+      }
+    }
+    // remove from queued map
+    if (callback) {
+      this.queuedListeners.get(event)?.delete(callback);
+    } else {
+      this.queuedListeners.delete(event);
     }
   }
 
