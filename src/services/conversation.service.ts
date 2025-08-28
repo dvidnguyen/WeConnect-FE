@@ -19,7 +19,9 @@ class ConversationService {
     // Listen server -> forward to registered callback + window event (optimistic consumers)
     socketService.on('conversation:update', (data: ConversationUpdatePayload) => {
       // forward to callback if registered
+      console.log("[conversation:update payload]", data);
       try {
+        console.log("[conversation:update payload]", data);
         this.onUpdateCb?.(data);
       } catch (e) {
         console.warn('[ConversationService] onUpdateCb error', e);

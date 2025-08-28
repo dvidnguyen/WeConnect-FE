@@ -406,7 +406,7 @@ export const ChatHeader = ({ conversation, conversationId }: ChatHeaderProps) =>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Xem thông tin</DropdownMenuItem>
-            <DropdownMenuItem>Tìm trong cuộc trò chuyện</DropdownMenuItem>
+            <DropdownMenuItem>Thêm thành viên </DropdownMenuItem>
             <DropdownMenuItem>Tắt thông báo</DropdownMenuItem>
             {conversation.type === 'direct' && (
               <DropdownMenuItem className="text-red-600">Chặn người dùng</DropdownMenuItem>
