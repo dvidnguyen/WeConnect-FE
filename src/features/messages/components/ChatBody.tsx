@@ -7,7 +7,8 @@ import '../ScrollBar.css'
 import { DownloadCloud, Eye, FileText, Image as ImageIcon, Heart } from 'lucide-react'
 import { messageService } from '@/services/message.service'
 import { socketService } from '@/services/socket.service'
-
+import { FaHeart, FaRegHeart } from 'react-icons/fa'
+import { MdDone, MdDoneAll } from "react-icons/md";
 interface ChatBodyProps {
   conversationId?: string
   messages: ConversationMessage[]
@@ -76,6 +77,7 @@ export const ChatBody = ({ conversationId, messages, messageStatus = {} }: ChatB
 
   const formatTime = (timeString: string) => {
     const date = new Date(timeString)
+    date.setHours(date.getHours() + 17);
     return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })
   }
 
@@ -366,17 +368,32 @@ export const ChatBody = ({ conversationId, messages, messageStatus = {} }: ChatB
                 <span className="text-xs text-muted-foreground">{formatTime(message.sentAt)}</span>
                 {message.mine && getStatusIcon(message.id)}
 
-                <button onClick={() => toggleLike(message.id)} className="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-muted/10" title={reaction.likedByMe ? 'Bỏ thích' : 'Thích'}>
-                  <Heart className={cn("h-4 w-4", reaction.likedByMe ? "text-red-500" : "text-muted-foreground")} />
+                <button
+                  onClick={() => toggleLike(message.id)}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-muted/10"
+                  title={reaction.likedByMe ? 'Bỏ thích' : 'Thích'}
+                >
+                  {reaction.likeCount > 0 ? (
+                    <FaHeart className="h-4 w-4 text-red-500" />
+                  ) : (
+                    <FaRegHeart className="h-4 w-4 text-muted-foreground" />
+                  )}
                   <span className="text-xs">{reaction.likeCount}</span>
                 </button>
 
+
                 {message.mine && isLast && (
-                  <span className="text-xs text-muted-foreground ml-2">
+                  <span className="text-xs text-muted-foreground ml-2 flex items-center gap-1">
                     {(message.receipt === 1 || (seenByMap[message.id] && seenByMap[message.id].size > 0)) ? (
-                      <span className="text-xs text-green-500">Đã xem</span>
+                      <>
+                        <MdDoneAll className="text-green-500" />
+                        <span className="text-green-500">Đã xem</span>
+                      </>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Chưa xem</span>
+                      <>
+                        <MdDone className="text-muted-foreground" />
+                        <span className="text-muted-foreground">Chưa xem</span>
+                      </>
                     )}
                   </span>
                 )}
