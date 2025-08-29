@@ -126,7 +126,7 @@ export const UserSearch = () => {
   }
 
   return (
-    <div className="py-4 px-6 border-b">
+    <div className="py-4 px-6 border-b hidden sm:block">
       <div className="relative flex items-center">
         {/* Left line */}
         <div className="flex-grow h-[1px] bg-border" />
